@@ -1,0 +1,12 @@
+[
+  {
+    "modelo": "BD506",
+    "numeroSerie": "aaaaaaa",
+    "patrimonio": "aaaaa",
+    "frequencia": "VHF",
+    "status": "Ocupado",
+    "ultimaNfSaida": "aaaa",
+    "ultimaNfEntrada": null,
+    "nfAtual": "aaaa"
+  }
+]
