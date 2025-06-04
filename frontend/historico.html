@@ -1,170 +1,64 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Histórico do Rádio</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <style>
-    body {
-      overflow-x: hidden;
-    }
-    .sidebar {
-      height: 100vh;
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 240px;
-      background-color: rgb(136, 2, 2);
-      padding-top: 0;
-    }
-    .sidebar a {
-      padding: 15px;
-      display: block;
-      color: white;
-      text-decoration: none;
-    }
-    .sidebar a:hover {
-      background-color: #961414;
-    }
-    .content {
-      margin-left: 240px;
-      padding: 20px;
-    }
-    .card {
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      border-radius: 10px;
-      padding: 20px;
-      margin-top: 20px;
-      border: 2px solid #880202;
-    }
-    .titulo-embutido {
-      position: absolute;
-      top: -14px;
-      left: 20px;
-      background-color: white;
-      padding: 0 15px;
-      color: #880202;
-      font-weight: bold;
-    }
-    #numeroSerie {
-      font-size: 1.2rem;
-      height: 55px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Histórico do Rádio - RadioScan</title> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-light">
 
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" style="height: 67.5px; width: 100%;">
-    <b><a href="index.html">🏠 Início</a></b>
-    <a href="registrar.html">➕ Cadastrar Rádio</a>
-    <a href="excluir.html">❌ Excluir Rádio</a>
-    <a href="estoque.html">📦 Estoque</a>
-    <a href="saida.html">📤 NF de Saída</a>
-    <a href="entrada.html">📥 Retorno de Locação</a>
-    <a href="extrato.html">📄 Extrato de NF</a>
-    <a href="historico.html">📚 Histórico de Rádio</a>
-    <a href="#" id="logout-link">🚪 Sair</a>
-  </div>
-
-  <!-- Conteúdo -->
-  <div class="content">
-    <div class="position-relative card">
-      <div class="titulo-embutido">HISTÓRICO DO RÁDIO</div>
-      <div class="pt-3">
-        <div class="mb-4">
-          <label for="numeroSerie" class="form-label"><b>Número de Série</b></label>
-          <input type="text" id="numeroSerie" class="form-control" placeholder="Digite o número de série" />
-        </div>
-        <button id="btnBuscar" class="btn btn-danger mb-4">Buscar Histórico</button>
-        <a href="index.html" class="btn btn-danger mb-4 ms-2">Voltar ao Menu</a>
-        <div id="resultadoHistorico"></div>
-      </div>
+    <div class="sidebar" id="sidebar">
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo">
+        <a href="index.html">🏠 Início</a>
+        <a href="registrar.html">➕ Cadastrar Rádio</a>
+        <a href="excluir.html">❌ Excluir Rádio</a>
+        <a href="estoque.html">📦 Estoque</a>
+        <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a> 
+        <a href="saida.html">📤 NF de Saída</a>
+        <a href="entrada.html">📥 Retorno de Locação</a>
+        <a href="extrato.html">📄 Extrato de NF</a>
+        <a href="historico.html" class="active">📚 Histórico de Rádio</a>
+        <a href="#" id="logout-link">🚪 Sair</a>
     </div>
-  </div>
 
-  <script>
-    // ✅ Verifica token e permissões
-    const token = localStorage.getItem('token');
-    const permissoes = JSON.parse(localStorage.getItem('permissoes') || '[]');
+    <div class="content">
+        <div class="main-card mt-4"> <div class="card-title-embedded">HISTÓRICO DO RÁDIO</div>
+            <div class="pt-4"> <div class="mb-3">
+                    <label for="numeroSerieBusca" class="form-label fw-bold">Número de Série</label>
+                    <input type="text" id="numeroSerieBusca" class="form-control" placeholder="Digite o número de série do rádio" style="font-size: 1.1rem; height: 50px;" />
+                </div>
+                <button id="btnBuscarHistorico" class="btn btn-danger">Buscar Histórico</button>
+                <a href="index.html" class="btn btn-secondary ms-2">Voltar ao Menu</a>
+                <div id="resultadoHistorico" class="mt-4 table-responsive">
+                    </div>
+            </div>
+        </div>
+    </div>
 
-    if (!token || (!permissoes.includes('historico') && !permissoes.includes('admin'))) {
-      alert('Acesso negado. Faça login com uma conta autorizada.');
-      window.location.href = 'index.html';
-    }
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="customAlertModalHeader">
+                    <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    document.getElementById('logout-link').addEventListener('click', function (e) {
-      e.preventDefault();
-      localStorage.removeItem('token');
-      localStorage.removeItem('permissoes');
-      window.location.href = 'login.html';
-    });
-
-    document.getElementById('btnBuscar').addEventListener('click', async () => {
-      const numeroSerie = document.getElementById('numeroSerie').value.trim();
-      const resultado = document.getElementById('resultadoHistorico');
-      resultado.innerHTML = '';
-
-      if (!numeroSerie) {
-        resultado.innerHTML = '<div class="alert alert-warning">Informe um número de série.</div>';
-        return;
-      }
-
-      try {
-        const res = await fetch(`http://localhost:3000/extrato/${numeroSerie}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!res.ok) {
-          resultado.innerHTML = '<div class="alert alert-info">Histórico não encontrado ou acesso negado.</div>';
-          return;
-        }
-
-        const historico = await res.json();
-
-        if (!historico.length) {
-          resultado.innerHTML = '<div class="alert alert-info">Nenhum histórico encontrado para este número de série.</div>';
-          return;
-        }
-
-        let html = `
-          <table class="table table-bordered">
-            <thead class="table-danger">
-              <tr>
-                <th>NF</th>
-                <th>Cliente</th>
-                <th>Data de Saída</th>
-                <th>Previsão de Retorno</th>
-                <th>Data de Retorno</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
-        historico.forEach(nf => {
-          html += `
-            <tr>
-              <td>${nf.nfNumero}</td>
-              <td>${nf.cliente}</td>
-              <td>${nf.dataSaida ? new Date(nf.dataSaida).toLocaleDateString() : '-'}</td>
-              <td>${nf.previsaoRetorno ? new Date(nf.previsaoRetorno).toLocaleDateString() : '-'}</td>
-              <td>${nf.dataEntrada ? new Date(nf.dataEntrada).toLocaleDateString() : '-'}</td>
-            </tr>
-          `;
-        });
-
-        html += '</tbody></table>';
-        resultado.innerHTML = html;
-
-      } catch (err) {
-        console.error(err);
-        resultado.innerHTML = '<div class="alert alert-danger">Erro ao buscar histórico.</div>';
-      }
-    });
-  </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/historico.js"></script> 
 </body>
 </html>

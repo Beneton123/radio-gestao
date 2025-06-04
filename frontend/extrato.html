@@ -1,278 +1,136 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Movimentações</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body {
-      overflow-x: hidden;
-      background-color: #f8f9fa;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extrato de NF - RadioScan</title>
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos para a linha de detalhes expansíveis */
+        .detalhes-movimentacao {
+    background-color: #f8f9fa;
+    border-left: 3px solid #0d6efd;
+    padding: 10px 15px;
+    margin-top: -1px;
+}
 
-    .sidebar {
-      height: 100vh;
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 240px;
-      background-color: rgb(136, 2, 2);
-      padding-top: 0;
-      z-index: 1000;
-    }
+        .detalhes-movimentacao p {
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .detalhes-movimentacao strong {
+            color: #495057;
+        }
+        /* Ajuste para o alinhamento das células da tabela */
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        /* Estilo para as colunas de rádio dentro dos detalhes */
+        .detalhes-movimentacao .row.bg-light {
+            background-color: #e9ecef !important; /* Cor um pouco diferente para o cabeçalho das sub-colunas */
+        }
+    </style></head>
+<body class="bg-light">
 
-    .sidebar a {
-      padding: 15px;
-      display: block;
-      color: white;
-      text-decoration: none;
-    }
-
-    .sidebar a:hover {
-      background-color: #961414;
-    }
-
-    .main-content {
-      margin-left: 240px;
-      padding: 30px;
-    }
-
-    .custom-card {
-      border: 3px solid #880202;
-      border-radius: 12px;
-      padding: 30px;
-      background-color: #fff;
-      position: relative;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .custom-title {
-      position: absolute;
-      top: -14px;
-      left: 20px;
-      background-color: white;
-      padding: 0 15px;
-      color: #880202;
-      font-weight: bold;
-    }
-
-    th {
-      background-color: #880202;
-      color: white;
-    }
-
-    .btn-danger {
-      background-color: #880202;
-      border-color: #880202;
-    }
-
-    .btn-danger:hover {
-      background-color: #961414;
-      border-color: #961414;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Sidebar (Navbar lateral) -->
-  <div class="sidebar" id="sidebar">
-    <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" style="height: 67.5px; width: 100%;">
-    <b><a href="index.html">🏠 Início</a></b>
-    <a href="registrar.html">➕ Cadastrar Rádio</a>
-    <a href="excluir.html">❌ Excluir Rádio</a>
-    <a href="estoque.html">📦 Estoque</a>
-    <a href="saida.html">📤 NF de Saída</a>
-    <a href="entrada.html">📥 Retorno de Locação</a>
-    <a href="extrato.html">📄 Extrato de NF</a>
-    <a href="historico.html">📚 Histórico de Rádio</a>
-    <a href="#" id="logout-link">🚪 Sair</a>
-  </div>
-
-  <!-- Conteúdo principal -->
-  <div class="main-content">
-    <div class="custom-card">
-      <div class="custom-title">MOVIMENTAÇÕES DE NFs</div>
-
-      
-
-      <div class="row mb-3">
-        <div class="col-md-6 mb-2">
-          <div class="input-group">
-            <span class="input-group-text">🔍</span>
-            <input type="text" id="filtroNF" class="form-control" placeholder="Filtrar por número da NF" />
-          </div>
-        </div>
-        <div class="col-md-6 mb-2">
-          <input type="date" id="filtroData" class="form-control" />
-        </div>
-      </div>
-
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped align-middle" id="tabela-movimentacoes">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Número NF</th>
-              <th>Usuário</th>
-              <th>Data</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Dados serão carregados dinamicamente -->
-          </tbody>
-        </table>
-      </div>
+    <div class="sidebar" id="sidebar">
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo">
+        <a href="index.html">🏠 Início</a>
+        <a href="registrar.html">➕ Cadastrar Rádio</a>
+        <a href="excluir.html">❌ Excluir Rádio</a>
+        <a href="estoque.html">📦 Estoque</a>
+        <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a>
+        <a href="saida.html">📤 NF de Saída</a>
+        <a href="entrada.html">📥 Retorno de Locação</a>
+        <a href="extrato.html" class="active">📄 Extrato de NF</a>
+        <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="#" id="logout-link">🚪 Sair</a>
     </div>
-  </div>
 
-  <script>
-    let movimentacoesOriginais = [];
+    <div class="content">
+        <div class="main-card mt-4">
+            <div class="card-title-embedded">EXTRATO DE MOVIMENTAÇÕES DE NFs</div> <div class="pt-4">
+                <div class="row mb-3">
+                    <div class="col-md-4 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-tag-fill"></i></span>
+                            <input type="text" id="filtroNfNumero" class="form-control" placeholder="Número da NF" />
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-radio"></i></span>
+                            <input type="text" id="filtroNumeroSerieRadio" class="form-control" placeholder="Nº Série Rádio" />
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-laptop-fill"></i></span>
+                            <input type="text" id="filtroModeloRadio" class="form-control" placeholder="Modelo Rádio" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6 mb-2">
+                        <label for="filtroDataInicio" class="form-label visually-hidden">Data Início</label>
+                        <input type="date" id="filtroDataInicio" class="form-control" title="Data de Início" />
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label for="filtroDataFim" class="form-label visually-hidden">Data Fim</label>
+                        <input type="date" id="filtroDataFim" class="form-control" title="Data de Fim" />
+                    </div>
+                </div>
 
-    function logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('permissoes');
-      window.location.href = 'login.html';
-    }
+                <div class="d-flex justify-content-end mb-3">
+                    <button id="btnLimparFiltros" class="btn btn-outline-secondary btn-sm me-2">Limpar Filtros</button>
+                    <button id="btnBuscarExtrato" class="btn btn-danger btn-sm">Buscar Extrato</button>
+                </div>
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const token = localStorage.getItem('token');
-      const permissoes = JSON.parse(localStorage.getItem('permissoes') || '[]');
 
-      if (!token) {
-        window.location.href = 'login.html';
-        return;
-      }
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped align-middle" id="tabela-movimentacoes">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Número NF</th>
+                                <th>Cliente</th>
+                                <th>Data</th>
+                                <th>Qtd. Rádios</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+                <a href="index.html" class="btn btn-secondary mt-3">Voltar ao Menu</a>
+            </div>
+        </div>
+    </div>
 
-      if (permissoes.includes('admin')) {
-        const adminLink = document.createElement('a');
-        adminLink.href = 'admin.html';
-        adminLink.innerHTML = '⚙️ Administração';
-        const sidebar = document.getElementById('sidebar');
-        const logoutLink = document.getElementById('logout-link');
-        sidebar.insertBefore(adminLink, logoutLink);
-      }
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="customAlertModalHeader">
+                    <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      document.getElementById('logout-link').addEventListener('click', (e) => {
-        e.preventDefault();
-        logout();
-      });
-
-      document.getElementById('filtroNF').addEventListener('input', filtrarMovimentacoes);
-      document.getElementById('filtroData').addEventListener('change', filtrarMovimentacoes);
-
-      carregarMovimentacoes();
-    });
-
-    async function carregarMovimentacoes() {
-      try {
-        const res = await fetch('http://localhost:3000/movimentacoes/recentes', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        const tbody = document.querySelector('#tabela-movimentacoes tbody');
-        tbody.innerHTML = '';
-
-        if (res.ok) {
-          movimentacoesOriginais = await res.json();
-          filtrarMovimentacoes();
-        } else {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center">Erro ao carregar movimentações.</td></tr>';
-        }
-      } catch (erro) {
-        console.error('Erro:', erro);
-        document.querySelector('#tabela-movimentacoes tbody').innerHTML = '<tr><td colspan="5" class="text-danger text-center">Erro de conexão.</td></tr>';
-      }
-    }
-
-    function filtrarMovimentacoes() {
-      const filtroNF = document.getElementById('filtroNF').value.toLowerCase();
-      const filtroData = document.getElementById('filtroData').value;
-      const tbody = document.querySelector('#tabela-movimentacoes tbody');
-
-      const filtradas = movimentacoesOriginais.filter(mov => {
-        const dataStr = new Date(mov.data).toISOString().split('T')[0];
-        return (
-          (!filtroNF || mov.numeroNF.toLowerCase().includes(filtroNF)) &&
-          (!filtroData || dataStr === filtroData)
-        );
-      });
-
-      tbody.innerHTML = '';
-      if (filtradas.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma movimentação encontrada.</td></tr>';
-        return;
-      }
-
-      filtradas.forEach(mov => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${mov.tipo}</strong></td>
-          <td>${mov.numeroNF}</td>
-          <td>${mov.usuario}</td>
-          <td>${new Date(mov.data).toLocaleString()}</td>
-          <td><button class="btn btn-sm btn-outline-light" style="background-color: #880202;" onclick="imprimirMovimentacao('${mov.id}')">🖨️ Imprimir</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function imprimirMovimentacao(id) {
-      try {
-        const res = await fetch(`http://localhost:3000/movimentacoes/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (res.ok) {
-          const mov = await res.json();
-          const win = window.open('', '_blank');
-          win.document.write(`
-            <html><head><title>Movimentação NF ${mov.numeroNF}</title>
-              <style>
-                body { font-family: Arial; padding: 20px; }
-                h2 { color: #333; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #aaa; padding: 8px; text-align: left; }
-              </style>
-            </head><body>
-              <h2>🧾 Detalhes da Movimentação</h2>
-              <p><strong>Tipo:</strong> ${mov.tipo}</p>
-              <p><strong>Usuário:</strong> ${mov.usuario}</p>
-              <p><strong>Data:</strong> ${new Date(mov.data).toLocaleString()}</p>
-              <p><strong>Número da NF:</strong> ${mov.numeroNF}</p>
-              <h3>Rádios na movimentação:</h3>
-              <table><thead>
-                <tr><th>Modelo</th><th>Nº de Série</th><th>Patrimônio</th><th>Frequência</th></tr>
-              </thead><tbody>
-                ${mov.radios.map(r => `
-                  <tr>
-                    <td>${r.modelo}</td>
-                    <td>${r.numeroSerie}</td>
-                    <td>${r.patrimonio}</td>
-                    <td>${r.frequencia}</td>
-                  </tr>
-                `).join('')}
-              </tbody></table>
-            </body></html>
-          `);
-          win.document.close();
-          win.onload = () => {
-            win.print();
-            setTimeout(() => win.close(), 1000);
-          };
-        } else {
-          alert('Não foi possível carregar os dados da movimentação.');
-        }
-      } catch (erro) {
-        console.error('Erro ao imprimir:', erro);
-        alert('Erro na impressão.');
-      }
-    }
-  </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/extrato.js"></script>
 </body>
 </html>

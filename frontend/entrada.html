@@ -1,162 +1,74 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Entrada de Rádios</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body {
-      overflow-x: hidden;
-    }
-
-    .sidebar {
-     height: 100vh;
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 240px;
-      background-color: rgb(136, 2, 2);
-      padding-top: 0;
-    }
-
-    .sidebar a {
-      padding: 15px;
-      display: block;
-      color: white;
-      text-decoration: none;
-      
-    }
-
-    .sidebar a:hover {
-      background-color: #961414;
-    }
-
-    .content {
-      margin-left: 240px;
-      padding: 40px;
-    }
-
-    .custom-card {
-      border: 3px solid #880202;
-      border-radius: 12px;
-      padding: 30px;
-      background-color: #fff;
-      position: relative;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    .custom-title {
- position: absolute;
-      top: -14px;
-      left: 20px;
-      background-color: white;
-      padding: 0 15px;
-      color: #880202;
-      font-weight: bold;
-}
-
-
-    .logo {
-      width: 100%;
-      height: 68px;
-      object-fit: cover;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retorno de Locação - RadioScan</title> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-light">
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" class="logo" alt="Logo">
-    <a href="index.html">🏠<b> Início</b></a>
-    <a href="registrar.html">➕ Cadastrar Rádio</a>
-    <a href="excluir.html">❌ Excluir Rádio</a>
-    <a href="estoque.html">📦 Estoque</a>
-    <a href="saida.html">📤 NF de Saída</a>
-    <a href="entrada.html">📥 Retorno de Locação</a>
-    <a href="extrato.html">📄 Extrato de NF</a>
-    <a href="historico.html">📚 Histórico de Rádio</a>
-    <a href="#" id="logout-link">🚪 Sair</a>
-  </div>
-
-  <!-- Conteúdo principal -->
-  <div class="content">
-    <div class="custom-card">
-      <div class="custom-title">📥 ENTRADA DE RÁDIOS</div>
-
-      <form id="formEntrada" class="pt-4">
-        <div class="mb-3">
-          <label for="nfEntrada" class="form-label">N° da NF de saida</label>
-          <input type="text" class="form-control" id="nfEntrada" required />
-        </div>
-
-        <div class="mb-3">
-          <label for="dataEntrada" class="form-label">Data da Entrada</label>
-          <input type="date" class="form-control" id="dataEntrada" required />
-        </div>
-
-        <div class="mb-3">
-          <label for="observacoes" class="form-label">Observações (opcional, uma por linha)</label>
-          <textarea class="form-control" id="observacoes" rows="4"></textarea>
-        </div>
-
-        <div id="mensagem" class="mb-3"></div>
-
-        <button type="submit" class="btn btn-danger">Registrar Entrada</button>
-        <a href="index.html" class="btn btn-danger ms-2"> Voltar ao Menu</a>
-      </form>
+    <div class="sidebar" id="sidebar">
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo">
+        <a href="index.html">🏠 Início</a>
+        <a href="registrar.html">➕ Cadastrar Rádio</a>
+        <a href="excluir.html">❌ Excluir Rádio</a>
+        <a href="estoque.html">📦 Estoque</a>
+        <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a> 
+        <a href="saida.html">📤 NF de Saída</a>
+        <a href="entrada.html" class="active">📥 Retorno de Locação</a>
+        <a href="extrato.html">📄 Extrato de NF</a>
+        <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="#" id="logout-link">🚪 Sair</a>
     </div>
-  </div>
 
-  <script>
-    const token = localStorage.getItem('token');
-    const permissoes = JSON.parse(localStorage.getItem('permissoes') || '[]');
+    <div class="content">
+        <div class="main-card mt-4"> <div class="card-title-embedded">ENTRADA DE RÁDIOS (RETORNO)</div>
 
-    if (!token || (!permissoes.includes('entrada') && !permissoes.includes('admin'))) {
-      alert('Acesso negado. Faça login com uma conta autorizada.');
-      window.location.href = 'index.html';
-    }
+            <form id="formEntrada" class="pt-4">
+                <div class="mb-3">
+                    <label for="nfEntrada" class="form-label fw-bold">N° da NF de Saída Referente</label>
+                    <input type="text" class="form-control" id="nfEntrada" required placeholder="NF que originou a saída"/>
+                </div>
 
-    document.getElementById('logout-link').addEventListener('click', function (e) {
-      e.preventDefault();
-      localStorage.removeItem('token');
-      localStorage.removeItem('permissoes');
-      window.location.href = 'login.html';
-    });
+                <div class="mb-3">
+                    <label for="dataEntrada" class="form-label fw-bold">Data da Entrada</label>
+                    <input type="date" class="form-control" id="dataEntrada" required />
+                </div>
 
-    document.getElementById('formEntrada').addEventListener('submit', async function (e) {
-      e.preventDefault();
+                <div class="mb-3">
+                    <label for="observacoes" class="form-label fw-bold">Observações (Opcional, uma por linha)</label>
+                    <textarea class="form-control" id="observacoes" rows="4" placeholder="Ex: Rádio X com defeito no PTT"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-danger" id="btnRegistrarEntrada">Registrar Entrada</button>
+                <a href="index.html" class="btn btn-secondary ms-2">Voltar ao Menu</a>
+            </form>
+        </div>
+    </div>
 
-      const nfNumero = document.getElementById('nfEntrada').value;
-      const dataEntrada = document.getElementById('dataEntrada').value;
-      const observacoes = document.getElementById('observacoes').value
-        .split('\n')
-        .filter(obs => obs.trim() !== '');
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="customAlertModalHeader">
+                    <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      try {
-        const res = await fetch('http://localhost:3000/nf/entrada', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ nfNumero, dataEntrada, observacoes })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          alert('✅ Entrada registrada com sucesso.');
-          e.target.reset();
-        } else {
-          alert('❌ Erro: ' + (data.message || 'Erro desconhecido'));
-        }
-      } catch (error) {
-        console.error('Erro:', error);
-        alert('❌ Erro ao conectar com o servidor.');
-      }
-    });
-  </script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/entrada.js"></script> </body>
 </html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solicitar Manutenção - RadioScan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="sidebar" id="sidebar">
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" class="logo">
+        <a href="index.html">🏠 Início</a>
+        <a href="registrar.html">➕ Cadastrar Rádio</a>
+        <a href="excluir.html">❌ Excluir Rádio</a>
+        <a href="estoque.html">📦 Estoque</a>
+        <a href="solicitar_manutencao.html" class="active">📤 Solicitar Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a>
+        <a href="saida.html">📤 NF de Saída</a>
+        <a href="entrada.html">📥 Retorno de Locação</a>
+        <a href="extrato.html">📄 Extrato de NF</a>
+        <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="#" id="logout-link">🚪 Sair</a>
+    </div>
+
+    <div class="content">
+        <div class="main-card mt-4">
+            <div class="card-title-embedded">SOLICITAR MANUTENÇÃO DE RÁDIO</div>
+            <form id="formSolicitarManutencao" class="pt-4">
+                <fieldset class="border p-3 mb-4">
+                    <legend class="float-none w-auto px-2 h6" style="font-size: 1rem;">Adicionar Rádio à Solicitação</legend>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="radioNumeroSerieParaAdicionar" class="form-label fw-bold">Nº de Série do Rádio:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="radioNumeroSerieParaAdicionar" placeholder="Digite o N° de Série">
+                                <button class="btn btn-outline-secondary" type="button" id="btnVerificarRadio">Verificar</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3 align-self-end">
+                            <div id="infoRadioVerificado" style="min-height: 50px;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descricaoProblemaRadio" class="form-label fw-bold">Descrição do Problema (Obrigatório):</label>
+                        <textarea class="form-control" id="descricaoProblemaRadio" rows="2" placeholder="Ex: Rádio não liga, PTT falhando..."></textarea>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm" id="btnConfirmarAdicionarRadio">➕ Adicionar à Lista</button> </fieldset>
+
+                <h5 class="mt-4">Detalhes da Solicitação</h5>
+                <div class="mb-3">
+                    <label class="form-label">Solicitante:</label>
+                    <p id="solicitanteNome" class="form-control-plaintext"><em>Carregando...</em></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data da Solicitação:</label>
+                    <p id="dataSolicitacao" class="form-control-plaintext"><em>Carregando...</em></p>
+                </div>
+                <div class="mb-3">
+                    <label for="prioridadeSolicitacao" class="form-label fw-bold">Prioridade:</label>
+                    <select class="form-select" id="prioridadeSolicitacao" required>
+                        <option value="" disabled selected>Selecione a prioridade...</option>
+                        <option value="baixa">Baixa</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                    </select>
+                </div>
+
+                <h5 class="mt-4">Rádios na Solicitação</h5>
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered table-hover" id="tabelaRadiosSolicitados">
+                        <thead>
+                            <tr>
+                                <th>Modelo</th>
+                                <th>Nº de Série</th>
+                                <th>Problema Descrito</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="4" class="text-center">Nenhum rádio adicionado ainda.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="submit" class="btn btn-danger" id="btnEnviarSolicitacao">Enviar Solicitação de Manutenção</button>
+                <a href="index.html" class="btn btn-secondary ms-2">Cancelar e Voltar</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-custom-danger" id="customAlertModalHeader"> <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/solicitar_manutencao.js"></script>
+</body>
+</html>

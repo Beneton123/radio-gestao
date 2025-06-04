@@ -1,12 +1,42 @@
 [
   {
     "modelo": "BD506",
-    "numeroSerie": "aaaaaaa",
-    "patrimonio": "aaaaa",
+    "numeroSerie": "11",
+    "patrimonio": "aa",
     "frequencia": "VHF",
     "status": "Ocupado",
-    "ultimaNfSaida": "aaaa",
+    "ultimaNfSaida": "1234",
     "ultimaNfEntrada": null,
-    "nfAtual": "aaaa"
+    "nfAtual": "1234"
+  },
+  {
+    "modelo": "PD506",
+    "numeroSerie": "22",
+    "patrimonio": "BB",
+    "frequencia": "UHF1",
+    "status": "Disponível",
+    "ultimaNfSaida": null,
+    "ultimaNfEntrada": null,
+    "nfAtual": null
+  },
+  {
+    "modelo": "DEP450",
+    "numeroSerie": "33",
+    "patrimonio": "DD",
+    "frequencia": "UHF3",
+    "status": "Disponível",
+    "ultimaNfSaida": null,
+    "ultimaNfEntrada": null,
+    "nfAtual": null
+  },
+  {
+    "modelo": "aaa",
+    "numeroSerie": "44",
+    "patrimonio": "11",
+    "frequencia": "VHF",
+    "status": "Disponível",
+    "ultimaNfSaida": null,
+    "ultimaNfEntrada": null,
+    "nfAtual": null
   }
 ]

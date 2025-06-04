@@ -1,249 +1,123 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registrar NF de Saída</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body {
-      overflow-x: hidden;
-    }
-
-    .sidebar {
-      height: 100vh;
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 240px;
-      background-color: rgb(136, 2, 2);
-      padding-top: 0;
-    }
-
-    .sidebar a {
-      padding: 15px;
-      display: block;
-      color: white;
-      text-decoration: none;
-    }
-
-    .sidebar a:hover {
-      background-color: #961414;
-    }
-
-    .content {
-      margin-left: 240px;
-      padding: 20px;
-    }
-
-    .custom-card {
-      border: 3px solid #880202;
-      border-radius: 12px;
-      padding: 30px;
-      background-color: #fff;
-      position: relative;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .custom-title {
-      position: absolute;
-      top: -14px;
-      left: 20px;
-      background-color: white;
-      padding: 0 15px;
-      color: #880202;
-      font-weight: bold;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registrar NF de Saída - RadioScan</title> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-light">
 
-  <!-- Sidebar do index -->
-  <div class="sidebar" id="sidebar">
-    <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" style="height: 67.5px; width: 100%;">
-    <b><a href="index.html">🏠 Início</a></b>
-    <a href="registrar.html">➕ Cadastrar Rádio</a>
-    <a href="excluir.html">❌ Excluir Rádio</a>
-    <a href="estoque.html">📦 Estoque</a>
-    <a href="saida.html">📤 NF de Saída</a>
-    <a href="entrada.html">📥 Retorno de Locação</a>
-    <a href="extrato.html">📄 Extrato de NF</a>
-    <a href="historico.html">📚 Histórico de Rádio</a>
-    <a href="#" id="logout-link">🚪 Sair</a>
-  </div>
-
-  <!-- Conteúdo principal -->
-  <div class="content">
-    <div class="container mt-3">
-      <div class="custom-card">
-        <div class="custom-title">REGISTRAR NF DE SAÍDA</div>
-
-        <form id="formSaida" class="pt-4">
-          <div class="row mb-3">
-            <div class="col">
-              <label for="nfNumero" class="form-label">Número da NF</label>
-              <input type="text" class="form-control" id="nfNumero" required />
-            </div>
-            <div class="col">
-              <label for="cliente" class="form-label">Cliente</label>
-              <input type="text" class="form-control" id="cliente" required />
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <div class="col">
-              <label for="dataSaida" class="form-label">Data de Saída</label>
-              <input type="date" class="form-control" id="dataSaida" required />
-            </div>
-            <div class="col">
-              <label for="previsaoRetorno" class="form-label">Previsão de Retorno</label>
-              <input type="date" class="form-control" id="previsaoRetorno" />
-            </div>
-          </div>
-
-          <h5>Adicionar Rádios à NF</h5>
-          <div class="input-group mb-3">
-            <input type="text" class="form-control" id="radioSerie" placeholder="Número de Série" />
-            <button type="button" class="btn btn-outline-danger" id="btnAdicionar">Adicionar Rádio</button>
-          </div>
-
-          <table class="table table-bordered" id="tabelaRadios">
-            <thead class="table-light">
-              <tr>
-                <th>Modelo</th>
-                <th>Número de Série</th>
-                <th>Patrimônio</th>
-                <th>Frequência</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-
-          <button type="submit" class="btn btn-danger">Salvar NF de Saída</button>
-
-          <div id="mensagem" class="mt-3"></div>
-        </form>
-      </div>
+    <div class="sidebar" id="sidebar">
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo">
+        <a href="index.html">🏠 Início</a>
+        <a href="registrar.html">➕ Cadastrar Rádio</a>
+        <a href="excluir.html">❌ Excluir Rádio</a>
+        <a href="estoque.html">📦 Estoque</a>
+        <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a> 
+        <a href="saida.html" class="active">📤 NF de Saída</a>
+        <a href="entrada.html">📥 Retorno de Locação</a>
+        <a href="extrato.html">📄 Extrato de NF</a>
+        <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="#" id="logout-link">🚪 Sair</a>
     </div>
-  </div>
 
-  <!-- Script -->
-  <script>
-    const token = localStorage.getItem('token');
-    const permissoes = JSON.parse(localStorage.getItem('permissoes') || '[]');
+    <div class="content">
+        <div class="main-card mt-4"> <div class="card-title-embedded">REGISTRAR NF DE SAÍDA</div>
 
-    if (!token || (!permissoes.includes('saida') && !permissoes.includes('admin'))) {
-      alert('Acesso negado. Faça login com uma conta autorizada.');
-      window.location.href = 'index.html';
-    }
+            <form id="formSaida" class="pt-4">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="nfNumero" class="form-label">Número da NF</label>
+                        <input type="text" class="form-control" id="nfNumero" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cliente" class="form-label">Cliente</label>
+                        <input type="text" class="form-control" id="cliente" required />
+                    </div>
+                </div>
 
-    if (permissoes.includes('admin')) {
-      const adminLink = document.createElement('a');
-      adminLink.href = 'admin.html';
-      adminLink.innerHTML = '⚙️ Administração';
-      const sidebar = document.getElementById('sidebar');
-      const logoutLink = document.getElementById('logout-link');
-      sidebar.insertBefore(adminLink, logoutLink);
-    }
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="dataSaida" class="form-label">Data de Saída</label>
+                        <input type="date" class="form-control" id="dataSaida" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="previsaoRetorno" class="form-label">Previsão de Retorno (Opcional)</label>
+                        <input type="date" class="form-control" id="previsaoRetorno" />
+                    </div>
+                </div>
 
-    document.getElementById('logout-link').addEventListener('click', (e) => {
-      e.preventDefault();
-      localStorage.removeItem('token');
-      localStorage.removeItem('permissoes');
-      window.location.href = 'login.html';
-    });
+                <h5 class="mt-4">Adicionar Rádios à NF</h5>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="radioSerie" placeholder="Número de Série do Rádio" />
+                    <button type="button" class="btn btn-outline-danger" id="btnAdicionarRadio">Adicionar Rádio</button>
+                </div>
 
-    const tabelaBody = document.querySelector('#tabelaRadios tbody');
-    const radiosAdicionados = new Set();
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="tabelaRadiosSaida">
+                        <thead>
+                            <tr>
+                                <th>Modelo</th>
+                                <th>Número de Série</th>
+                                <th>Patrimônio</th>
+                                <th>Frequência</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-danger" id="btnSalvarNF">Salvar NF de Saída</button>
+                    <a href="index.html" class="btn btn-secondary ms-2">Voltar ao Menu</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    document.getElementById('formSaida').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && e.target.type !== 'submit') {
-        e.preventDefault();
-      }
-    });
+    <div class="modal fade" id="confirmarSalvarNFModal" tabindex="-1" aria-labelledby="confirmarSalvarNFModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-custom-danger"> <h5 class="modal-title" id="confirmarSalvarNFModalLabel">Confirmar Registro</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    Deseja realmente salvar esta Nota Fiscal de Saída?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEnvioNF">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    document.getElementById('btnAdicionar').addEventListener('click', async () => {
-      const numeroSerie = document.getElementById('radioSerie').value.trim();
-      if (!numeroSerie) return;
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="customAlertModalHeader">
+                    <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      try {
-        const res = await fetch('http://localhost:3000/radios', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!res.ok) throw new Error('Falha ao buscar rádios');
-        const radios = await res.json();
-        const radio = radios.find(r => r.numeroSerie === numeroSerie);
-
-        if (!radio) return alert('Rádio não encontrado.');
-        if (radio.status === 'Ocupado') return alert('Este rádio está OCUPADO.');
-        if (radiosAdicionados.has(numeroSerie)) return alert('Rádio já adicionado.');
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${radio.modelo}</td>
-          <td data-numero-serie="${radio.numeroSerie}">${radio.numeroSerie}</td>
-          <td>${radio.patrimonio}</td>
-          <td>${radio.frequencia}</td>
-        `;
-        tabelaBody.appendChild(tr);
-        radiosAdicionados.add(numeroSerie);
-        document.getElementById('radioSerie').value = '';
-      } catch (err) {
-        alert('Erro ao buscar rádios.');
-      }
-    });
-
-    function dataEhValida(isoDate) {
-      if (!isoDate) return false;
-      const data = new Date(isoDate);
-      return !isNaN(data.getTime());
-    }
-
-    document.getElementById('formSaida').addEventListener('submit', async function (e) {
-      e.preventDefault();
-
-      const nfNumero = document.getElementById('nfNumero').value.trim();
-      const cliente = document.getElementById('cliente').value.trim();
-      const dataSaida = document.getElementById('dataSaida').value;
-      const previsaoRetorno = document.getElementById('previsaoRetorno').value;
-
-      const hoje = new Date();
-      const dataSaidaObj = new Date(dataSaida);
-      const minData = new Date('2000-01-01');
-
-      if (!dataEhValida(dataSaida)) return alert('Data de saída inválida.');
-      if (dataSaidaObj > hoje) return alert('A data de saída não pode ser no futuro.');
-      if (dataSaidaObj < minData) return alert('A data de saída não pode ser anterior a 01/01/2000.');
-
-      if (previsaoRetorno) {
-        const dataPrevRetornoObj = new Date(previsaoRetorno);
-        if (!dataEhValida(previsaoRetorno)) return alert('Previsão de retorno inválida.');
-        if (dataPrevRetornoObj < dataSaidaObj) return alert('Previsão de retorno não pode ser anterior à data de saída.');
-      }
-
-      const radiosSaida = Array.from(tabelaBody.querySelectorAll('td[data-numero-serie]')).map(td => td.dataset.numeroSerie);
-
-      const res = await fetch('http://localhost:3000/nf/saida', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ nfNumero, cliente, dataSaida, previsaoRetorno, radiosSaida })
-      });
-
-      const data = await res.json();
-      const mensagem = document.getElementById('mensagem');
-      mensagem.textContent = data.message || 'Erro ao registrar NF.';
-      mensagem.className = res.ok ? 'alert alert-success' : 'alert alert-danger';
-
-      if (res.ok) {
-        e.target.reset();
-        tabelaBody.innerHTML = '';
-        radiosAdicionados.clear();
-      }
-    });
-  </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/saida.js"></script>
 </body>
 </html>

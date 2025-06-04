@@ -1,47 +1,166 @@
-/* style.css */
-
+/* frontend/style.css */
 body {
-  background-color: #f8f9fa;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
+    font-family: sans-serif; /* Você pode adicionar a 'Inter' ou 'Poppins' aqui se preferir */
+    background-color: #f8f9fa; /* Cor de fundo do body de saida.html */
 }
 
-
-.container {
-  max-width: 720px;
+.sidebar {
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 240px;
+    background-color: rgb(136, 2, 2);
+    padding-top: 0;
+    z-index: 1000; /* Garante que a sidebar fique acima */
 }
 
-.list-group-item {
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.sidebar img.logo { /* Adicionando classe logo para especificidade */
+    height: 67.5px;
+    width: 100%;
+    /* Estilos da imagem da logo podem ser adicionados aqui se quiser padronizar */
+    /* Ex: object-fit: cover; background-color: #700101; */
 }
 
-.btn {
-  min-width: 120px;
+.sidebar a {
+    padding: 15px;
+    display: block;
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
 }
 
-.table th {
-  background-color: #e9ecef;
+.sidebar a:hover {
+    background-color: #961414;
 }
 
-.alert {
-  padding: 10px;
-  margin-top: 15px;
-  font-size: 0.95rem;
+.sidebar a.active { /* Estilo para o link ativo, pode ser similar ao hover */
+    background-color: #961414;
+    font-weight: bold;
 }
 
-select:required:invalid {
-  color: #6c757d;
+.content {
+    margin-left: 240px;
+    padding: 20px;
 }
 
-select option[value=""][disabled] {
-  display: none;
+/* Card principal com base no .custom-card */
+.main-card { /* Usaremos main-card como classe padrão para os cards de conteúdo */
+    border: 3px solid #880202;
+    border-radius: 12px;
+    padding: 30px;
+    background-color: #fff;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 20px; /* Espaçamento padrão acima do card */
 }
 
-/* Responsividade adicional */
-@media (max-width: 576px) {
-  .container {
-    padding: 1rem;
-  }
+/* Título embutido padrão */
+.card-title-embedded { /* Usaremos card-title-embedded como classe padrão */
+    position: absolute;
+    top: -14px;
+    left: 20px;
+    background-color: white;
+    padding: 0 15px;
+    color: #880202;
+    font-weight: bold;
+    text-transform: uppercase; /* Adicionado para padronizar */
+    font-size: 1rem; /* Adicionado para padronizar */
+}
+
+/* Estilos básicos para tabelas (pode expandir conforme necessidade) */
+.table thead th {
+    background-color: #880202; /* Vermelho principal para o cabeçalho da tabela */
+    color: white;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: #fdf0f0; /* Um hover bem suave */
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+/* Botões (usando classes Bootstrap e personalizando .btn-danger) */
+.btn-primary { /* Se precisar de um botão primário azul Bootstrap */
+    /* background-color: #0d6efd; border-color: #0d6efd; */
+}
+
+.btn-danger { /* Mantendo o estilo do botão de saida.html */
+    background-color: #880202; /* Cor primária */
+    border-color: #880202;
+}
+
+.btn-danger:hover {
+    background-color: #961414; /* Hover da sidebar */
+    border-color: #961414;
+}
+
+/* --- ESTILOS DO MODAL DE ALERTA CUSTOMIZADO --- */
+/*
+   Estas classes 'bg-success', 'bg-warning', 'bg-danger', 'bg-info', 'bg-primary'
+   são as classes utilitárias do Bootstrap. Estamos apenas garantindo que a cor do texto
+   seja legível e que o botão de fechar seja branco para contraste.
+*/
+.modal-header.bg-success {
+    background-color: #198754 !important; /* Verde padrão do Bootstrap */
+    color: white;
+}
+
+.modal-header.bg-warning {
+    background-color: #ffc107 !important; /* Amarelo padrão do Bootstrap */
+    color: #212529; /* Preto para contraste com amarelo */
+}
+
+.modal-header.bg-danger {
+    background-color: #dc3545 !important; /* Vermelho padrão do Bootstrap */
+    color: white;
+}
+
+.modal-header.bg-info {
+    background-color: #0dcaf0 !important; /* Azul claro padrão do Bootstrap */
+    color: #212529; /* Preto para contraste com azul claro */
+}
+
+.modal-header.bg-primary { /* Cor padrão para 'info' ou se nenhum tipo for especificado na função showAlert */
+    background-color: #0d6efd !important; /* Azul padrão do Bootstrap */
+    color: white;
+}
+
+/* As classes 'bg-custom-danger', 'bg-custom-success', 'bg-custom-warning'
+   que você já tinha também podem ser usadas, mas preferi usar as classes
+   padrão do Bootstrap (bg-success, bg-warning, bg-danger, etc.) na função
+   showAlert para maior compatibilidade e menos classes personalizadas.
+   Mantenho suas definições abaixo, caso ainda as use em outro lugar.
+*/
+.modal-header.bg-custom-danger {
+    background-color: #880202 !important; /* Sua cor primária personalizada */
+    color: white;
+}
+.modal-header.bg-custom-success {
+    background-color: #198754 !important; /* Verde Bootstrap */
+    color: white;
+}
+.modal-header.bg-custom-warning {
+    background-color: #ffc107 !important; /* Amarelo Bootstrap */
+    color: black;
+}
+
+/* Garante que o botão de fechar seja branco no cabeçalho colorido */
+.btn-close-white {
+    filter: brightness(0) invert(1); /* Torna o ícone branco */
+}
+
+/* Pequeno ajuste para a sombra do modal, se desejar */
+.modal-content {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Garante que o título do modal tenha uma cor de contraste */
+#customAlertModalLabel {
+    color: inherit; /* Herda a cor do texto do modal-header */
 }

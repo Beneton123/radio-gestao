@@ -1,203 +1,142 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Administração de Usuários</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body {
-      overflow-x: hidden;
-      background-color: #f8f9fa;
-    }
-    .sidebar {
-      height: 100vh;
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 240px;
-      background-color: rgb(136, 2, 2);
-    }
-    .sidebar a {
-      padding: 15px;
-      display: block;
-      color: white;
-      text-decoration: none;
-    }
-    .sidebar a:hover {
-      background-color: #961414;
-    }
-    .content {
-      margin-left: 240px;
-      padding: 20px;
-    }
-    .card {
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      border-radius: 10px;
-      padding: 20px;
-      border: 2px solid #880202;
-      margin-bottom: 20px;
-    }
-    .titulo-embutido {
-      position: absolute;
-      top: -14px;
-      left: 20px;
-      background-color: white;
-      padding: 0 15px;
-      color: #880202;
-      font-weight: bold;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Administração de Usuários - RadioScan</title> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos adicionais para checkboxes, se necessário */
+        .permissions-group label {
+            display: block; /* Para que cada label de permissão ocupe uma linha */
+            margin-bottom: 0.5rem;
+        }
+        .permissions-group input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-light">
 
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" style="height: 67.5px; width: 100%;">
-    <b><a href="index.html">🏠 Início</a></b>
-    <a href="registrar.html">➕ Cadastrar Rádio</a>
-    <a href="excluir.html">❌ Excluir Rádio</a>
-    <a href="estoque.html">📦 Estoque</a>
-    <a href="saida.html">📤 NF de Saída</a>
-    <a href="entrada.html">📥 Retorno de Locação</a>
-    <a href="extrato.html">📄 Extrato de NF</a>
-    <a href="historico.html">📚 Histórico de Rádio</a>
-    <a href="admin.html">👥 Admin</a>
-    <a href="#" id="logout-link">🚪 Sair</a>
-  </div>
-
-  <!-- Conteúdo -->
-  <div class="content">
-    <div class="position-relative card">
-      <div class="titulo-embutido">CADASTRO DE USUÁRIO</div>
-      <form id="formCadastro" class="pt-3">
-        <div class="mb-3">
-          <label class="form-label"><b>Nome:</b></label>
-          <input type="text" class="form-control" name="nome" required />
-        </div>
-        <div class="mb-3">
-          <label class="form-label"><b>Email:</b></label>
-          <input type="email" class="form-control" name="email" required />
-        </div>
-        <div class="mb-3">
-          <label class="form-label"><b>Senha:</b></label>
-          <input type="password" class="form-control" name="senha" required />
-        </div>
-        <div class="mb-3">
-          <label class="form-label"><b>Permissões:</b></label><br/>
-          <label><input type="checkbox" name="permissoes" value="registrar" /> Registrar</label><br/>
-          <label><input type="checkbox" name="permissoes" value="excluir" /> Excluir</label><br/>
-          <label><input type="checkbox" name="permissoes" value="estoque" /> Estoque</label><br/>
-          <label><input type="checkbox" name="permissoes" value="saida" /> NF Saída</label><br/>
-          <label><input type="checkbox" name="permissoes" value="entrada" /> Retorno</label><br/>
-          <label><input type="checkbox" name="permissoes" value="extrato" /> Extrato</label><br/>
-          <label><input type="checkbox" name="permissoes" value="historico" /> Histórico</label><br/>
-          <label><input type="checkbox" name="permissoes" value="admin" /> Admin</label>
-        </div>
-        <button type="submit" class="btn btn-success">Criar Usuário</button>
-      </form>
+    <div class="sidebar" id="sidebar">
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo">
+        <a href="index.html">🏠 Início</a>
+        <a href="registrar.html">➕ Cadastrar Rádio</a>
+        <a href="excluir.html">❌ Excluir Rádio</a>
+        <a href="estoque.html">📦 Estoque</a>
+        <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a> 
+        <a href="saida.html">📤 NF de Saída</a>
+        <a href="entrada.html">📥 Retorno de Locação</a>
+        <a href="extrato.html">📄 Extrato de NF</a>
+        <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="#" id="logout-link">🚪 Sair</a>
     </div>
 
-    <div class="card">
-      <h4><b>Usuários Cadastrados</b></h4>
-      <table class="table table-striped mt-3" id="tabelaUsuarios">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Email</th>
-            <th>Permissões</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- preenchido via JS -->
-        </tbody>
-      </table>
+    <div class="content">
+        <div class="main-card mt-4"> <div class="card-title-embedded">CADASTRO DE USUÁRIO</div>
+            <form id="formCadastroUsuario" class="pt-4">
+                <div class="mb-3">
+                    <label for="nomeUsuario" class="form-label fw-bold">Nome:</label>
+                    <input type="text" class="form-control" id="nomeUsuario" name="nome" required />
+                </div>
+                <div class="mb-3">
+                    <label for="emailUsuario" class="form-label fw-bold">Email:</label>
+                    <input type="email" class="form-control" id="emailUsuario" name="email" required />
+                </div>
+                <div class="mb-3">
+                    <label for="senhaUsuario" class="form-label fw-bold">Senha:</label>
+                    <input type="password" class="form-control" id="senhaUsuario" name="senha" required />
+                </div>
+                <div class="mb-3 permissions-group">
+                    <label class="form-label fw-bold">Permissões:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissoes" value="registrar" id="permRegistrar">
+                        <label class="form-check-label" for="permRegistrar">Registrar Rádio</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissoes" value="excluir" id="permExcluir">
+                        <label class="form-check-label" for="permExcluir">Excluir Rádio</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissoes" value="estoque" id="permEstoque">
+                        <label class="form-check-label" for="permEstoque">Visualizar Estoque</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissoes" value="saida" id="permSaida">
+                        <label class="form-check-label" for="permSaida">Registrar NF Saída</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissoes" value="entrada" id="permEntrada">
+                        <label class="form-check-label" for="permEntrada">Registrar Retorno/Entrada</label>
+                    </div>
+                     <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissoes" value="extrato" id="permExtrato">
+                        <label class="form-check-label" for="permExtrato">Visualizar Extrato NF</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissoes" value="historico" id="permHistorico">
+                        <label class="form-check-label" for="permHistorico">Visualizar Histórico Rádio</label>
+                    </div>
+                    <div class="form-check">
+    <input class="form-check-input" type="checkbox" name="permissoes" value="solicitar_manutencao" id="permSolicitarManutencao">
+    <label class="form-check-label" for="permSolicitarManutencao">Solicitar Manutenção</label>
+</div>
+<div class="form-check">
+    <input class="form-check-input" type="checkbox" name="permissoes" value="gerenciar_manutencao" id="permGerenciarManutencao">
+    <label class="form-check-label" for="permGerenciarManutencao">Gerenciar Manutenção</label>
+</div>
+
+<div class="form-check">
+    <input class="form-check-input" type="checkbox" name="permissoes" value="admin" id="permAdmin">
+    <label class="form-check-label" for="permAdmin">Administrador (Acesso Total)</label>
+</div>
+                </div>
+                <button type="submit" class="btn btn-danger" id="btnCriarUsuario">Criar Usuário</button>
+                 <a href="index.html" class="btn btn-secondary ms-2">Voltar ao Menu</a>
+            </form>
+        </div>
+
+        <div class="main-card mt-4"> <div class="card-title-embedded">USUÁRIOS CADASTRADOS</div>
+            <div class="table-responsive pt-3">
+                <table class="table table-striped table-hover mt-3" id="tabelaUsuarios">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Permissões</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    const token = localStorage.getItem('token');
-    const permissoes = JSON.parse(localStorage.getItem('permissoes') || '[]');
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="customAlertModalHeader">
+                    <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    if (!token || !permissoes.includes('admin')) {
-      alert("Acesso negado.");
-      window.location.href = "index.html";
-    }
-
-    document.getElementById('logout-link').addEventListener('click', function (e) {
-      e.preventDefault();
-      localStorage.removeItem('token');
-      localStorage.removeItem('permissoes');
-      window.location.href = 'login.html';
-    });
-
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
-    };
-
-    async function carregarUsuarios() {
-      const res = await fetch('/usuarios', { headers });
-      const usuarios = await res.json();
-      const tbody = document.querySelector('#tabelaUsuarios tbody');
-      tbody.innerHTML = '';
-
-      usuarios.forEach(user => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${user.nome}</td>
-          <td>${user.email}</td>
-          <td>${user.permissoes.join(', ')}</td>
-          <td>
-            <button class="btn btn-danger btn-sm" onclick="excluirUsuario('${user.email}')">Excluir</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function excluirUsuario(email) {
-      if (!confirm(`Tem certeza que deseja excluir o usuário "${email}"?`)) return;
-
-      const res = await fetch(`/usuarios/${email}`, {
-        method: 'DELETE',
-        headers
-      });
-
-      const resultado = await res.json();
-      alert(resultado.message);
-      carregarUsuarios();
-    }
-
-    document.getElementById('formCadastro').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const form = e.target;
-      const nome = form.nome.value;
-      const email = form.email.value;
-      const senha = form.senha.value;
-
-      const permissoes = Array.from(form.querySelectorAll('input[name="permissoes"]:checked'))
-                              .map(el => el.value);
-
-      const resposta = await fetch('/usuarios', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ nome, email, senha, permissoes })
-      });
-
-      const resultado = await resposta.json();
-      if (resposta.ok) {
-        alert("Usuário criado com sucesso.");
-        form.reset();
-        carregarUsuarios();
-      } else {
-        alert("Erro: " + resultado.message);
-      }
-    });
-
-    window.onload = carregarUsuarios;
-  </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script> 
 </body>
 </html>

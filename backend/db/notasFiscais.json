@@ -1,13 +1,15 @@
 [
   {
-    "nfNumero": "aaaa",
-    "cliente": "aaaa",
-    "dataSaida": "2005-01-01",
-    "previsaoRetorno": "2066-03-20",
+    "nfNumero": "1234",
+    "tipo": "Saída",
+    "cliente": "SOMAVE",
+    "dataSaida": "2025-06-04",
+    "previsaoRetorno": null,
     "radios": [
-      "aaaaaaa"
+      "11"
     ],
     "dataEntrada": null,
-    "observacoes": []
+    "observacoes": [],
+    "usuarioRegistro": "admin@admin.com"
   }
 ]
