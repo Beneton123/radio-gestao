@@ -9,12 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
             btnBuscar.addEventListener('click', buscarHistoricoRadio);
         }
         
-        // Adiciona listener para a tecla Enter no campo de número de série
         const numeroSerieInput = document.getElementById('numeroSerieBusca');
         if (numeroSerieInput) {
             numeroSerieInput.addEventListener('keypress', function(event) {
                 if (event.key === 'Enter') {
-                    event.preventDefault(); // Impede o comportamento padrão do Enter (ex: submeter formulário se houver)
+                    event.preventDefault(); 
                     buscarHistoricoRadio();
                 }
             });
@@ -22,8 +21,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (error) {
         console.error("Erro na inicialização da página de Histórico:", error.message);
+        // Se checkAuthentication lançar erro, o corpo da página já foi alterado pela função.
     }
 });
+
+/**
+ * Formata o tipo de evento para exibição amigável.
+ * @param {string} tipoEvento - O tipo de evento do backend.
+ * @returns {string} O tipo de evento formatado.
+ */
+function formatarTipoEvento(tipoEvento) {
+    switch (tipoEvento) {
+        case 'NF_SAIDA': return 'Saída por NF';
+        case 'NF_ENTRADA': return 'Entrada por NF';
+        case 'MANUTENCAO_SOLICITADA': return 'Manutenção Solicitada';
+        case 'MANUTENCAO_INICIADA': return 'Manutenção Iniciada';
+        case 'MANUTENCAO_FINALIZADA': return 'Manutenção Finalizada';
+        case 'MANUTENCAO_CANCELADA': return 'Manutenção Cancelada';
+        default: return tipoEvento.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); // Fallback
+    }
+}
 
 async function buscarHistoricoRadio() {
     const numeroSerieInput = document.getElementById('numeroSerieBusca');
@@ -42,13 +59,12 @@ async function buscarHistoricoRadio() {
         btnBuscar.disabled = true;
         btnBuscar.textContent = 'Buscando...';
     }
-    resultadoDiv.innerHTML = '<p class="text-center">Buscando histórico...</p>';
-
+    resultadoDiv.innerHTML = '<p class="text-center">Buscando histórico completo...</p>';
 
     try {
         const token = localStorage.getItem('token');
-        // Usando URL relativa. O backend usa /extrato/:numeroSerie para esta funcionalidade.
-        const res = await fetch(`/extrato/${numeroSerie}`, {
+        // CHAMA A NOVA ROTA DO BACKEND
+        const res = await fetch(`/api/radios/${numeroSerie}/historico-completo`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -63,46 +79,48 @@ async function buscarHistoricoRadio() {
                 } catch (e) { /* Mantém a mensagem padrão se não conseguir parsear JSON */ }
             }
             resultadoDiv.innerHTML = ''; // Limpa o "Buscando..."
-            showAlert('Busca Concluída', errorMessage, res.status === 404 ? 'info' : 'warning'); // 'info' para "não encontrado"
+            showAlert('Busca Concluída', errorMessage, res.status === 404 ? 'info' : 'warning');
             return;
         }
 
-        const historico = await res.json();
+        const historicoCombinado = await res.json();
 
-        if (!Array.isArray(historico) || historico.length === 0) {
+        if (!Array.isArray(historicoCombinado) || historicoCombinado.length === 0) {
             resultadoDiv.innerHTML = ''; // Limpa o "Buscando..."
-            showAlert('Sem Resultados', `Nenhum histórico de NF encontrado para o rádio com número de série: ${numeroSerie}.`, 'info');
+            showAlert('Sem Resultados', `Nenhum evento no histórico encontrado para o rádio com número de série: ${numeroSerie}.`, 'info');
             return;
         }
 
+        // Constrói a nova tabela com os dados combinados
         let html = `
-            <h4 class="mt-3 mb-3">Histórico para o Rádio: ${numeroSerie}</h4>
-            <table class="table table-bordered table-hover">
-                <thead> <tr>
-                        <th>NF</th>
-                        <th>Cliente</th>
-                        <th>Data de Saída</th>
-                        <th>Previsão de Retorno</th>
-                        <th>Data de Retorno</th>
+            <h4 class="mt-3 mb-3">Histórico Completo para o Rádio: ${numeroSerie}</h4>
+            <table class="table table-bordered table-hover table-sm">
+                <thead class="table-light"> 
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo de Evento</th>
+                        <th>Documento / Referência</th>
+                        <th>Detalhes</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
 
-        historico.sort((a, b) => new Date(b.dataSaida || b.dataEntrada) - new Date(a.dataSaida || a.dataEntrada)); // Ordena pelo mais recente
-
-        historico.forEach(nf => {
-            const dataSaidaF = nf.dataSaida ? new Date(nf.dataSaida).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '-';
-            const previsaoRetornoF = nf.previsaoRetorno ? new Date(nf.previsaoRetorno).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '-';
-            const dataEntradaF = nf.dataEntrada ? new Date(nf.dataEntrada).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '-';
+        historicoCombinado.forEach(evento => {
+            const dataEventoFormatada = evento.dataEvento ? 
+                new Date(evento.dataEvento).toLocaleString('pt-BR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit' 
+                }) : 'N/A';
+            
+            const tipoEventoFormatado = formatarTipoEvento(evento.tipoEvento);
             
             html += `
                 <tr>
-                    <td>${nf.nfNumero || 'N/A'}</td>
-                    <td>${nf.cliente || 'N/A'}</td>
-                    <td>${dataSaidaF}</td>
-                    <td>${previsaoRetornoF}</td>
-                    <td>${dataEntradaF}</td>
+                    <td>${dataEventoFormatada}</td>
+                    <td><span class="badge bg-${getBadgeClassForEventType(evento.tipoEvento)}">${tipoEventoFormatado}</span></td>
+                    <td>${evento.documento || 'N/A'}</td>
+                    <td>${evento.detalhes || 'N/A'}</td>
                 </tr>
             `;
         });
@@ -111,7 +129,7 @@ async function buscarHistoricoRadio() {
         resultadoDiv.innerHTML = html;
 
     } catch (err) {
-        console.error('Erro ao buscar histórico:', err);
+        console.error('Erro ao buscar histórico completo:', err);
         resultadoDiv.innerHTML = ''; // Limpa o "Buscando..."
         showAlert('Erro de Conexão', 'Não foi possível conectar ao servidor para buscar o histórico.', 'danger');
     } finally {
@@ -120,4 +138,19 @@ async function buscarHistoricoRadio() {
             btnBuscar.textContent = 'Buscar Histórico';
         }
     }
+}
+
+/**
+ * Retorna uma classe de badge Bootstrap com base no tipo de evento.
+ * @param {string} tipoEvento - O tipo do evento.
+ * @returns {string} A classe CSS do badge.
+ */
+function getBadgeClassForEventType(tipoEvento) {
+    if (tipoEvento.includes('NF_SAIDA')) return 'danger';
+    if (tipoEvento.includes('NF_ENTRADA')) return 'success';
+    if (tipoEvento.includes('MANUTENCAO_SOLICITADA')) return 'info text-dark';
+    if (tipoEvento.includes('MANUTENCAO_INICIADA')) return 'primary';
+    if (tipoEvento.includes('MANUTENCAO_FINALIZADA')) return 'success';
+    if (tipoEvento.includes('MANUTENCAO_CANCELADA')) return 'secondary';
+    return 'light text-dark'; // Default
 }

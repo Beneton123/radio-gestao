@@ -1,8 +1,0 @@
-[
-  {
-    "nome": "Administrador",
-    "email": "admin@admin.com",
-    "senha": "$2b$10$U1U9nTglb8M7k5ULnA5j6eKH7XHujv3LujTfzOr0mIkK0HDgTflqG",
-    "permissoes": ["admin"]
-  }
-]

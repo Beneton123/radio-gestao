@@ -50,7 +50,7 @@ async function carregarMovimentacoes() {
 
     try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/nf', {
+        const res = await fetch('/nf', { // Busca todas as NFs
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -96,20 +96,36 @@ function aplicarFiltrosExtrato() {
     }
 
     const movimentacoesFiltradas = todasMovimentacoes.filter(mov => {
-        const movData = mov.dataSaida || mov.dataEntrada;
-        const dataMovimentacaoDate = movData ? new Date(movData) : null;
+        // Prioriza a data de entrada para NFs que são apenas de entrada (se houver)
+        // ou dataSaida para NFs de saída (que podem ou não ter dataEntrada)
+        const dataReferenciaMov = mov.tipo === 'Saída' ? mov.dataSaida : (mov.dataEntrada || mov.dataSaida);
+        const dataMovimentacaoDate = dataReferenciaMov ? new Date(dataReferenciaMov) : null;
+
 
         const correspondeNfNumero = !filtroNfNumero || (mov.nfNumero && mov.nfNumero.toLowerCase().includes(filtroNfNumero));
 
         const correspondeRadio = !filtroNumeroSerieRadio && !filtroModeloRadio ||
             (Array.isArray(mov.radios) && mov.radios.some(radioSerie => {
                 const radioDetail = radiosCadastrados.find(r => r.numeroSerie === radioSerie);
-                return (radioSerie.toLowerCase().includes(filtroNumeroSerieRadio) &&
-                    (!filtroModeloRadio || (radioDetail?.modelo && radioDetail.modelo.toLowerCase().includes(filtroModeloRadio))));
+                const serieMatch = !filtroNumeroSerieRadio || radioSerie.toLowerCase().includes(filtroNumeroSerieRadio);
+                const modeloMatch = !filtroModeloRadio || (radioDetail?.modelo && radioDetail.modelo.toLowerCase().includes(filtroModeloRadio));
+                return serieMatch && modeloMatch;
             }));
+        
+        let dataInicioObj = null;
+        if (filtroDataInicio) {
+            const [year, month, day] = filtroDataInicio.split('-');
+            dataInicioObj = new Date(year, month - 1, day, 0, 0, 0, 0);
+        }
 
-        const correspondeDataInicio = !filtroDataInicio || (dataMovimentacaoDate && dataMovimentacaoDate >= new Date(filtroDataInicio));
-        const correspondeDataFim = !filtroDataFim || (dataMovimentacaoDate && dataMovimentacaoDate <= new Date(filtroDataFim + 'T23:59:59'));
+        let dataFimObj = null;
+        if (filtroDataFim) {
+            const [year, month, day] = filtroDataFim.split('-');
+            dataFimObj = new Date(year, month - 1, day, 23, 59, 59, 999);
+        }
+
+        const correspondeDataInicio = !dataInicioObj || (dataMovimentacaoDate && dataMovimentacaoDate >= dataInicioObj);
+        const correspondeDataFim = !dataFimObj || (dataMovimentacaoDate && dataMovimentacaoDate <= dataFimObj);
 
         return correspondeNfNumero && correspondeRadio && correspondeDataInicio && correspondeDataFim;
     });
@@ -118,17 +134,27 @@ function aplicarFiltrosExtrato() {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma movimentação encontrada com os filtros aplicados.</td></tr>';
         return;
     }
+    
+    // Ordena as movimentações filtradas pela data mais recente primeiro
+    movimentacoesFiltradas.sort((a, b) => {
+        const dateA = new Date(a.dataSaida || a.dataEntrada || a.createdAt); // Usa createdAt como fallback
+        const dateB = new Date(b.dataSaida || b.dataEntrada || b.createdAt);
+        return dateB - dateA;
+    });
+
 
     movimentacoesFiltradas.forEach(mov => {
         const tr = document.createElement('tr');
-        const dataMovimentacao = mov.dataSaida || mov.dataEntrada;
+        // Usa a data de Saída para NFs de Saída, e data de Entrada para NFs de Entrada (Retorno)
+        const dataMovimentacao = mov.tipo === 'Saída' ? mov.dataSaida : mov.dataEntrada;
+        
         const dataFormatada = dataMovimentacao
             ? new Date(dataMovimentacao).toLocaleDateString('pt-BR', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
+                // Removido hour e minute para consistência, já que nem toda NF terá hora
             }) : 'N/A';
 
-        const tipoMovimentacao = mov.tipo || (mov.dataEntrada ? 'Retorno' : 'Saída');
+        const tipoMovimentacao = mov.tipo; // O backend já deve enviar 'Saída' ou 'Entrada'
 
         tr.innerHTML = `
             <td><strong>${tipoMovimentacao}</strong></td>
@@ -158,13 +184,10 @@ function aplicarFiltrosExtrato() {
 }
 
 function addEventListenersExtrato() {
-    console.log('Adicionando evento aos botões de detalhes');
     document.querySelectorAll('.btn-ver-detalhes-mov').forEach(btn => {
-        console.log('Botão encontrado:', btn);
         btn.addEventListener('click', function () {
             const nfNumero = this.dataset.nf;
             const detalhesRow = document.getElementById(`detalhes-mov-${nfNumero}`);
-            console.log('Clicado:', nfNumero, detalhesRow);
             if (detalhesRow) {
                 detalhesRow.classList.toggle('d-none');
                 if (!detalhesRow.classList.contains('d-none')) {
@@ -176,8 +199,8 @@ function addEventListenersExtrato() {
 
     document.querySelectorAll('.btn-imprimir-mov').forEach(btn => {
         btn.addEventListener('click', function () {
-            const nfNumero = this.dataset.id;
-            imprimirMovimentacao(nfNumero);
+            const nfNumero = this.dataset.id; // Pega o nfNumero do data-id
+            imprimirMovimentacao(nfNumero); // Chama a nova função de impressão
         });
     });
 }
@@ -186,7 +209,7 @@ async function renderDetalhesMovimentacao(nfNumero, tdElement) {
     tdElement.innerHTML = `<em>Carregando detalhes da NF ${nfNumero}...</em>`;
     try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`/nf/${nfNumero}`, {
+        const res = await fetch(`/nf/${nfNumero}`, { // Endpoint para buscar detalhes de UMA NF
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -197,8 +220,8 @@ async function renderDetalhesMovimentacao(nfNumero, tdElement) {
         }
 
         const detalhesNF = await res.json();
-        const dataSaidaFormatada = detalhesNF.dataSaida ? new Date(detalhesNF.dataSaida).toLocaleString('pt-BR') : 'N/A';
-        const dataEntradaFormatada = detalhesNF.dataEntrada ? new Date(detalhesNF.dataEntrada).toLocaleString('pt-BR') : 'N/A';
+        const dataSaidaFormatada = detalhesNF.dataSaida ? new Date(detalhesNF.dataSaida).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : 'N/A';
+        const dataEntradaFormatada = detalhesNF.dataEntrada ? new Date(detalhesNF.dataEntrada).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : 'N/A';
         const previsaoRetornoFormatada = detalhesNF.previsaoRetorno ? new Date(detalhesNF.previsaoRetorno).toLocaleDateString('pt-BR') : 'N/A';
 
         let radiosHtml = `<div class="container-fluid mt-2">
@@ -261,4 +284,170 @@ function limparFiltrosExtrato() {
     document.getElementById('filtroDataInicio').value = '';
     document.getElementById('filtroDataFim').value = '';
     aplicarFiltrosExtrato();
+}
+
+// NOVA FUNÇÃO PARA IMPRESSÃO
+async function imprimirMovimentacao(nfNumero) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showAlert('Erro de Autenticação', 'Você não está autenticado para realizar esta ação.', 'danger');
+        return;
+    }
+
+    const btnImprimirOriginal = document.querySelector(`.btn-imprimir-mov[data-id="${nfNumero}"]`);
+    let originalBtnImprimirHTML = '';
+    if (btnImprimirOriginal) {
+        originalBtnImprimirHTML = btnImprimirOriginal.innerHTML;
+        btnImprimirOriginal.disabled = true;
+        btnImprimirOriginal.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Preparando...';
+    }
+
+    try {
+        const res = await fetch(`/nf/${nfNumero}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({ message: `Erro ao buscar detalhes da NF ${nfNumero} para impressão.` }));
+            showAlert('Erro ao Imprimir', errorData.message, 'danger');
+            if (btnImprimirOriginal) {
+                btnImprimirOriginal.disabled = false;
+                btnImprimirOriginal.innerHTML = originalBtnImprimirHTML;
+            }
+            return;
+        }
+
+        const nf = await res.json();
+
+        let printWindowContent = `
+            <html>
+            <head>
+                <title>Comprovante: ${nf.nfNumero}</title>
+                <style>
+                    body { font-family: 'Inter', Arial, sans-serif; margin: 20px; color: #333; }
+                    .container { width: 90%; margin: auto; }
+                    h1, h2 { text-align: center; color: #d9534f; /* Vermelho RadioScan */ }
+                    h1 { font-size: 1.8em; margin-bottom: 5px;}
+                    h2 { font-size: 1.4em; margin-top: 0; margin-bottom: 20px; }
+                    hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+                    .header-info p, .radios-section p, .observacoes-section p { margin: 5px 0; font-size: 0.95em; }
+                    .header-info strong, .radios-section strong, .observacoes-section strong { color: #555; }
+                    
+                    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+                    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; font-weight: 600; }
+                    
+                    .radios-section { margin-top: 25px; }
+                    .radios-section h3 { font-size: 1.2em; margin-bottom: 10px; text-align:left; color: #333;}
+
+                    .observacoes-section { margin-top: 25px; }
+                    .observacoes-section h3 { font-size: 1.2em; margin-bottom: 5px; text-align:left; color: #333;}
+                    .observacoes-section p { white-space: pre-wrap; } /* Para manter quebras de linha das observações */
+
+                    .footer { margin-top: 30px; text-align: center; font-size: 0.8em; color: #777; }
+                    .logo-print { display: block; margin: 0 auto 20px auto; max-width: 200px; max-height: 70px; }
+
+                    @media print {
+                        body { margin: 1cm; font-size: 10pt; } /* Ajusta margens e tamanho da fonte para impressão */
+                        .no-print { display: none; }
+                        h1 { font-size: 16pt; }
+                        h2 { font-size: 13pt; }
+                        h3 { font-size: 11pt; }
+                        table { font-size: 9pt; }
+                        .container { width: 100%;}
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo-print">
+                    <h1>RadioScan Telecomunicações</h1>
+                    <h2>Comprovante de Movimentação</h2>
+                    <h3>Nota Fiscal: ${nf.nfNumero} (${nf.tipo || (nf.dataEntrada ? 'Retorno de Locação' : 'Saída para Locação')})</h3>
+                    <hr>
+                    <div class="header-info">
+                        <p><strong>Cliente:</strong> ${nf.cliente || 'N/A'}</p>
+                        ${nf.dataSaida ? `<p><strong>Data Saída:</strong> ${new Date(nf.dataSaida).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</p>` : ''}
+                        ${nf.previsaoRetorno && nf.tipo === 'Saída' ? `<p><strong>Previsão Retorno:</strong> ${new Date(nf.previsaoRetorno).toLocaleDateString('pt-BR')}</p>` : ''}
+                        ${nf.dataEntrada ? `<p><strong>Data Retorno:</strong> ${new Date(nf.dataEntrada).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</p>` : ''}
+                        <p><strong>Registrado por:</strong> ${nf.usuarioRegistro || 'N/A'}</p>
+                    </div>
+
+                    <div class="radios-section">
+                        <h3>Rádios na Movimentação</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Modelo</th>
+                                    <th>Nº Série</th>
+                                    <th>Patrimônio</th>
+                                    <th>Frequência</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+
+        if (nf.radios && nf.radios.length > 0) {
+            nf.radios.forEach(r => {
+                printWindowContent += `
+                    <tr>
+                        <td>${r.modelo || 'N/A'}</td>
+                        <td>${r.numeroSerie || 'N/A'}</td>
+                        <td>${r.patrimonio || '-'}</td>
+                        <td>${r.frequencia || 'N/A'}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            printWindowContent += '<tr><td colspan="4" style="text-align:center;">Nenhum rádio associado.</td></tr>';
+        }
+
+        printWindowContent += `
+                            </tbody>
+                        </table>
+                    </div>`;
+
+        if (nf.observacoes && nf.observacoes.length > 0) {
+            printWindowContent += `
+                <div class="observacoes-section">
+                    <h3>Observações:</h3>
+                    <p>${Array.isArray(nf.observacoes) ? nf.observacoes.join('<br>') : nf.observacoes}</p>
+                </div>
+            `;
+        }
+        
+        printWindowContent += `
+                    <div class="footer">
+                        <p>Documento gerado pelo sistema RadioScan em ${new Date().toLocaleString('pt-BR')}</p>
+                    </div>
+                </div> <!-- Fim .container -->
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        // Adicionar um pequeno delay antes de fechar pode ajudar em alguns navegadores
+                        // setTimeout(function(){ window.close(); }, 500);
+                        // Ou deixar que o usuário feche manualmente.
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+
+        const printWindow = window.open('', '_blank', 'height=700,width=900,scrollbars=yes');
+        if (printWindow) {
+            printWindow.document.write(printWindowContent);
+            printWindow.document.close(); 
+        } else {
+            showAlert('Erro de Impressão', 'Não foi possível abrir a janela de impressão. Verifique as configurações do seu navegador (bloqueador de pop-ups).', 'warning');
+        }
+
+    } catch (error) {
+        console.error('Erro ao preparar impressão da NF:', error);
+        showAlert('Erro de Impressão', 'Ocorreu um erro ao preparar os dados para impressão.', 'danger');
+    } finally {
+        if (btnImprimirOriginal) {
+            btnImprimirOriginal.disabled = false;
+            btnImprimirOriginal.innerHTML = originalBtnImprimirHTML;
+        }
+    }
 }
