@@ -41,13 +41,15 @@
 
     <div class="content">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="mb-0">Estoque de Rádios</h2> <button type="button" class="btn btn-outline-danger btn-sm btn-edit-patrimonio" id="btnEditarPatrimonio">
+            <h2 class="mb-0">Estoque de Rádios</h2>
+            <button type="button" class="btn btn-outline-danger btn-sm btn-edit-patrimonio" id="btnEditarPatrimonio">
                 Editar Patrimônio
             </button>
         </div>
 
         <div class="main-card">
-            <div class="card-title-embedded">FILTROS</div> <div class="pt-4">
+            <div class="card-title-embedded">FILTROS</div>
+            <div class="pt-4">
                 <div class="mb-3">
                     <input type="text" id="filtroSerie" class="form-control" placeholder="🔍 Buscar por Nº de Série, Patrimônio, Modelo..." />
                 </div>
@@ -86,16 +88,21 @@
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="chkOcupado" checked>
-                            <label class="form-check-label" for="chkOcupado">Ocupado</label>
+                            <label class="form-check-label" for="chkOcupado">Ocupado (Mensal)</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="chkManutencao" checked>
                             <label class="form-check-label" for="chkManutencao">Manutenção</label>
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="chkLocacaoAnual" checked>
+                            <label class="form-check-label" for="chkLocacaoAnual">Locação Anual</label>
+                        </div>
                     </div>
                 </div>
 
-                <div class="table-responsive mt-4"> <table class="table table-bordered table-hover align-middle">
+                <div class="table-responsive mt-4">
+                    <table class="table table-bordered table-hover align-middle">
                         <thead>
                             <tr>
                                 <th>Modelo</th>
@@ -104,10 +111,12 @@
                                 <th>Frequência</th>
                                 <th>Status</th>
                                 <th>NF Atual</th>
-                                <th>Tipo Locação</th> <th>Ações</th> </tr>
+                                <th>Tipo Locação</th>
+                                <th>Ações</th>
+                            </tr>
                         </thead>
                         <tbody id="tabelaRadios">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
                 <a href="index.html" class="btn btn-secondary mt-3">Voltar ao Menu</a>
@@ -118,7 +127,8 @@
     <div class="modal fade" id="modalInputNumeroSerie" tabindex="-1" aria-labelledby="modalInputNumeroSerieLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white"> <h5 class="modal-title" id="modalInputNumeroSerieLabel">Editar Patrimônio</h5>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalInputNumeroSerieLabel">Editar Patrimônio</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body">
@@ -136,7 +146,8 @@
     <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-danger text-white" id="customAlertModalHeader"> <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
+                <div class="modal-header bg-danger text-white" id="customAlertModalHeader">
+                    <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body">
@@ -152,7 +163,8 @@
     <div class="modal fade" id="modalEditarPatrimonio" tabindex="-1" aria-labelledby="modalEditarPatrimonioLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white"> <h5 class="modal-title" id="modalEditarPatrimonioLabel">Editar Patrimônio do Rádio</h5>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalEditarPatrimonioLabel">Editar Patrimônio do Rádio</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -194,7 +206,7 @@
                     <p><strong>Observações:</strong> <span id="modalNfObservacoes"></span></p>
                     <h6 class="mt-3">Rádios Nesta NF:</h6>
                     <ul id="modalNfRadiosList" class="list-group">
-                        </ul>
+                    </ul>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>

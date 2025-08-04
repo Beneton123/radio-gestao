@@ -18,8 +18,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         document.getElementById('subFiltro').addEventListener('change', aplicarFiltro);
         document.getElementById('chkDisponivel').addEventListener('change', aplicarFiltro);
+        // ATUALIZAÇÃO AQUI: o chkOcupado agora é para 'Ocupado (Mensal)'
         document.getElementById('chkOcupado').addEventListener('change', aplicarFiltro);
         document.getElementById('chkManutencao').addEventListener('change', aplicarFiltro);
+        // ADICIONADO: Listener para a nova checkbox de Locação Anual
+        document.getElementById('chkLocacaoAnual').addEventListener('change', aplicarFiltro);
 
         // Filtro para Tipo de Locação (Mensal/Anual)
         document.getElementById('filtroTipoLocacao').addEventListener('change', aplicarFiltro);
@@ -149,9 +152,12 @@ function aplicarFiltro() {
     const tipoFiltro = document.getElementById('tipoFiltro').value;
     const subFiltroValorSelecionado = document.getElementById('subFiltro').value;
     const mostrarDisponivel = document.getElementById('chkDisponivel').checked;
-    const mostrarOcupado = document.getElementById('chkOcupado').checked;
+    const mostrarOcupado = document.getElementById('chkOcupado').checked; // Este agora filtra 'Ocupado' (Mensal)
     const mostrarManutencao = document.getElementById('chkManutencao').checked;
-    const filtroTipoLocacao = document.getElementById('filtroTipoLocacao')?.value; // Pega o valor do filtro de tipo de locação
+    // NOVO: Pega o estado da checkbox de Locação Anual
+    const mostrarLocacaoAnual = document.getElementById('chkLocacaoAnual').checked;
+
+    const filtroTipoLocacao = document.getElementById('filtroTipoLocacao')?.value;
 
     const tbody = document.getElementById('tabelaRadios');
 
@@ -173,10 +179,15 @@ function aplicarFiltro() {
 
         let correspondeStatus = false;
         if (mostrarDisponivel && r.status === 'Disponível') correspondeStatus = true;
-        if (mostrarOcupado && r.status === 'Ocupado') correspondeStatus = true;
+        // ATUALIZADO: 'Ocupado' agora é para tipoLocacaoAtual diferente de 'Anual' (ou seja, 'Mensal')
+        if (mostrarOcupado && r.status === 'Ocupado' && r.tipoLocacaoAtual !== 'Anual') correspondeStatus = true;
         if (mostrarManutencao && r.status === 'Manutenção') correspondeStatus = true;
+        // ADICIONADO: Filtra para rádios 'Ocupado' com tipoLocacaoAtual 'Anual'
+        if (mostrarLocacaoAnual && r.status === 'Ocupado' && r.tipoLocacaoAtual === 'Anual') correspondeStatus = true;
 
-        if (!mostrarDisponivel && !mostrarOcupado && !mostrarManutencao) {
+
+        // ATUALIZADO: Se nenhuma checkbox de status estiver marcada, mostra todos os status.
+        if (!mostrarDisponivel && !mostrarOcupado && !mostrarManutencao && !mostrarLocacaoAnual) {
             correspondeStatus = true;
         }
 
@@ -241,7 +252,7 @@ function aplicarFiltro() {
         tdNfAtual.textContent = r.nfAtual || '-';
         tr.appendChild(tdNfAtual);
 
-        // Coluna para o Tipo de Locação Atual
+        // Coluna para o Tipo de Locação Atual (já existia e está correta)
         const tdTipoLocacaoAtual = document.createElement('td');
         tdTipoLocacaoAtual.textContent = r.tipoLocacaoAtual || 'N/A';
         tr.appendChild(tdTipoLocacaoAtual);
