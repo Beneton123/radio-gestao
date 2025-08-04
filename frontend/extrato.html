@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extrato de NF - RadioScan</title>
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos para a linha de detalhes expansíveis */
+        .detalhes-movimentacao {
+    background-color: #f8f9fa;
+    border-left: 3px solid #0d6efd;
+    padding: 10px 15px;
+    margin-top: -1px;
+}
+
+        .detalhes-movimentacao p {
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .detalhes-movimentacao strong {
+            color: #495057;
+        }
+        /* Ajuste para o alinhamento das células da tabela */
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        /* Estilo para as colunas de rádio dentro dos detalhes */
+        .detalhes-movimentacao .row.bg-light {
+            background-color: #e9ecef !important; /* Cor um pouco diferente para o cabeçalho das sub-colunas */
+        }
+    </style></head>
+<body class="bg-light">
+
+    <div class="sidebar" id="sidebar">
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo">
+        <a href="index.html">🏠 Início</a>
+        <a href="registrar.html">➕ Cadastrar Rádio</a>
+        <a href="excluir.html">❌ Excluir Rádio</a>
+        <a href="estoque.html">📦 Estoque</a>
+        <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a>
+        <a href="saida.html">📤 NF de Saída</a>
+        <a href="entrada.html">📥 Retorno de Locação</a>
+        <a href="extrato.html" class="active">📄 Extrato de NF</a>
+        <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="#" id="logout-link">🚪 Sair</a>
+    </div>
+
+    <div class="content">
+        <div class="main-card mt-4">
+            <div class="card-title-embedded">EXTRATO DE MOVIMENTAÇÕES DE NFs</div> <div class="pt-4">
+                <div class="row mb-3">
+                    <div class="col-md-4 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-tag-fill"></i></span>
+                            <input type="text" id="filtroNfNumero" class="form-control" placeholder="Número da NF" />
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-radio"></i></span>
+                            <input type="text" id="filtroNumeroSerieRadio" class="form-control" placeholder="Nº Série Rádio" />
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-laptop-fill"></i></span>
+                            <input type="text" id="filtroModeloRadio" class="form-control" placeholder="Modelo Rádio" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6 mb-2">
+                        <label for="filtroDataInicio" class="form-label visually-hidden">Data Início</label>
+                        <input type="date" id="filtroDataInicio" class="form-control" title="Data de Início" />
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label for="filtroDataFim" class="form-label visually-hidden">Data Fim</label>
+                        <input type="date" id="filtroDataFim" class="form-control" title="Data de Fim" />
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mb-3">
+                    <button id="btnLimparFiltros" class="btn btn-outline-secondary btn-sm me-2">Limpar Filtros</button>
+                    <button id="btnBuscarExtrato" class="btn btn-danger btn-sm">Buscar Extrato</button>
+                </div>
+
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped align-middle" id="tabela-movimentacoes">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Número NF</th>
+                                <th>Cliente</th>
+                                <th>Data</th>
+                                <th>Qtd. Rádios</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+                <a href="index.html" class="btn btn-secondary mt-3">Voltar ao Menu</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="customAlertModalHeader">
+                    <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/extrato.js"></script>
+</body>
+</html>

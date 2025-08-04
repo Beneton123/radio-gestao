@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel de Manutenção - RadioScan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS para a linha de detalhes e nav-tabs */
+        .detalhes-pedido {
+            /* Removido 'display: none;' daqui para evitar conflitos com Bootstrap d-none */
+            background-color: #f0f8ff; /* Cor de fundo suave para a linha expandida */
+            margin-top: -1px; /* Para que a borda de cima se junte à linha do pedido */
+            border-bottom: 1px solid #dee2e6;
+            border-left: 1px solid #dee2e2;
+            border-right: 1px solid #dee2e6;
+        }
+        .detalhes-pedido td div {
+            padding: 15px; /* Espaçamento interno para o conteúdo dos detalhes */
+        }
+        /* Alinhamento vertical do conteúdo das células da tabela */
+        .table-pedidos th, .table-pedidos td {
+            vertical-align: middle;
+        }
+        /* Estilos para as abas de navegação */
+        .nav-tabs .nav-link {
+            color: #495057; /* Cor do texto das abas inativas */
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--cor-primaria, #880202); /* Cor do texto da aba ativa (vermelho escuro) */
+            border-color: #dee2e6 #dee2e6 var(--cor-primaria, #880202); /* Borda inferior da aba ativa */
+            font-weight: bold; /* Texto em negrito para a aba ativa */
+        }
+        /* Estilo para o cabeçalho das sub-colunas de rádio dentro dos detalhes expandidos */
+        .detalhes-pedido .row.bg-light {
+            background-color: #e9ecef !important; /* Cor de fundo para o cabeçalho das colunas de rádio */
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="sidebar" id="sidebar">
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo">
+        <a href="index.html">🏠 Início</a>
+        <a href="registrar.html">➕ Cadastrar Rádio</a>
+        <a href="excluir.html">❌ Excluir Rádio</a>
+        <a href="estoque.html">📦 Estoque</a>
+        <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
+        <a href="manutencao_dashboard.html" class="active">🔧 Manutenção</a>
+        <a href="saida.html">📤 NF de Saída</a>
+        <a href="entrada.html">📥 Retorno de Locação</a>
+        <a href="extrato.html">📄 Extrato de NF</a>
+        <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="#" id="logout-link">🚪 Sair</a>
+    </div>
+
+    <div class="content">
+        <h2 class="mb-4" style="color: var(--cor-primaria, #880202);">Painel de Gerenciamento de Manutenção</h2>
+
+        <ul class="nav nav-tabs mb-3" id="manutencaoTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pedidos-abertos-tab" data-bs-toggle="tab" data-bs-target="#pedidos-abertos-pane" type="button" role="tab" aria-controls="pedidos-abertos-pane" aria-selected="true">Pedidos Abertos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pedidos-andamento-tab" data-bs-toggle="tab" data-bs-target="#pedidos-andamento-pane" type="button" role="tab" aria-controls="pedidos-andamento-pane" aria-selected="false">Em Andamento/Aguardando</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="estoque-manutencao-tab" data-bs-toggle="tab" data-bs-target="#estoque-manutencao-pane" type="button" role="tab" aria-controls="estoque-manutencao-pane" aria-selected="false">Estoque de Manutenção</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="historico-manutencao-tab" data-bs-toggle="tab" data-bs-target="#historico-manutencao-pane" type="button" role="tab" aria-controls="historico-manutencao-pane" aria-selected="false">Histórico de Manutenção</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="manutencaoTabContent">
+            <div class="tab-pane fade show active" id="pedidos-abertos-pane" role="tabpanel" aria-labelledby="pedidos-abertos-tab" tabindex="0">
+                <div class="main-card">
+                    <div class="card-title-embedded">SOLICITAÇÕES DE MANUTENÇÃO ABERTAS</div>
+                    <div class="table-responsive pt-3">
+                        <table class="table table-hover table-pedidos" id="tabelaPedidosAbertos">
+                            <thead>
+                                <tr>
+                                    <th>ID Pedido</th>
+                                    <th>Solicitante</th>
+                                    <th>Data Solicitação</th>
+                                    <th>Prioridade</th>
+                                    <th>Qtd. Rádios</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="pedidos-andamento-pane" role="tabpanel" aria-labelledby="pedidos-andamento-tab" tabindex="0">
+                <div class="main-card">
+                    <div class="card-title-embedded">PEDIDOS AGUARDANDO OU EM MANUTENÇÃO</div>
+                    <div class="table-responsive pt-3">
+                        <table class="table table-hover table-pedidos" id="tabelaPedidosEmAndamento">
+                            <thead>
+                                <tr>
+                                    <th>ID Pedido</th>
+                                    <th>Solicitante</th>
+                                    <th>Data Solicitação</th>
+                                    <th>Status Pedido</th>
+                                    <th>Técnico</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="estoque-manutencao-pane" role="tabpanel" aria-labelledby="estoque-manutencao-tab" tabindex="0">
+                <div class="main-card">
+                    <div class="card-title-embedded">ESTOQUE DE RÁDIOS EM MANUTENÇÃO</div>
+                    <div class="pt-3">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <input type="text" id="filtroEstoqueManutencao" class="form-control" placeholder="Buscar por Nº Série, Modelo, ID Pedido...">
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover" id="tabelaEstoqueManutencao">
+                                <thead>
+                                    <tr>
+                                        <th>Nº Série</th>
+                                        <th>Modelo</th>
+                                        <th>Patrimônio</th>
+                                        <th>Problema Descrito</th>
+                                        <th>ID Pedido Vinculado</th>
+                                        <th>Status do Pedido</th>
+                                        <th>Técnico Responsável</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="historico-manutencao-pane" role="tabpanel" aria-labelledby="historico-manutencao-tab" tabindex="0">
+                <div class="main-card">
+                    <div class="card-title-embedded">HISTÓRICO DE MANUTENÇÕES CONCLUÍDAS</div>
+                    <div class="pt-3">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <input type="text" id="filtroHistoricoManutencao" class="form-control" placeholder="Buscar por ID Pedido, Nº Série, Solicitante, Técnico...">
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-pedidos" id="tabelaHistoricoManutencao">
+                                <thead>
+                                    <tr>
+                                        <th>ID Pedido</th>
+                                        <th>Solicitante</th>
+                                        <th>Data Conclusão</th>
+                                        <th>Técnico</th>
+                                        <th>Qtd. Rádios</th>
+                                        <th>Observações Técnicas (Resumo)</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-custom-danger" id="customAlertModalHeader"> <h5 class="modal-title text-white" id="customAlertModalLabel">Atenção!</h5> <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalSelecionarTecnico" tabindex="-1" aria-labelledby="modalSelecionarTecnicoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalSelecionarTecnicoLabel">Iniciar Manutenção - Selecionar Técnico</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="idPedidoParaIniciarManutencao">
+                    <div class="mb-3">
+                        <label for="selectTecnico" class="form-label">Técnico Responsável:</label>
+                        <select class="form-select" id="selectTecnico" required>
+                            <option value="" selected disabled>Selecione um técnico...</option>
+                            <option value="Robson">Robson</option>
+                            <option value="Gabriel">Gabriel</option>
+                            <option value="Outro">Outro (especificar)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="divNomeOutroTecnico" style="display:none;">
+                        <label for="inputNomeOutroTecnico" class="form-label">Nome do Técnico (se "Outro"):</label>
+                        <input type="text" class="form-control" id="inputNomeOutroTecnico" placeholder="Digite o nome do técnico">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarIniciarManutencaoComTecnico">Confirmar Início</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalInputObservacoesTecnicas" tabindex="-1" aria-labelledby="modalInputObservacoesTecnicasLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalInputObservacoesTecnicasLabel">Concluir Manutenção</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Adicione observações técnicas para a conclusão do pedido (opcional):</p>
+                    <textarea class="form-control" id="inputObservacoesTecnicas" rows="3" placeholder="Ex: Troca de bateria, reparo no PTT, etc."></textarea>
+                    <input type="hidden" id="idPedidoParaConcluirManutencao">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarInputObservacoesTecnicas">Concluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalConfirmation" tabindex="-1" aria-labelledby="modalConfirmationLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalConfirmationLabel">Confirmação</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="modalConfirmationMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmAction">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/manutencao_dashboard.js"></script>
+</body>
+</html>

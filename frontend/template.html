@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TÍTULO DA PÁGINA - RadioScan</title> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light"> <div class="sidebar" id="sidebar">
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" class="logo" style="height: 67.5px; width: 100%;">
+        <a href="index.html" class="active">🏠 Início</a>
+        <a href="registrar.html">➕ Cadastrar Rádio</a>
+        <a href="excluir.html">❌ Excluir Rádio</a>
+        <a href="estoque.html">📦 Estoque</a>
+        <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a> 
+        <a href="saida.html">📤 NF de Saída</a>
+        <a href="entrada.html">📥 Retorno de Locação</a>
+        <a href="extrato.html">📄 Extrato de NF</a>
+        <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="#" id="logout-link">🚪 Sair</a>
+    </div>
+
+    <div class="content">
+        </div>
+
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="customAlertModalHeader"> <h5 class="modal-title" id="customAlertModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ui.js"></script> <script src="js/auth.js"></script> </body>
+</html>
