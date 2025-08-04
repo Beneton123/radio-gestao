@@ -42,33 +42,51 @@ let dadosNFParaEnvio = null; // Para armazenar os dados da NF antes de confirmar
  * Exibe um modal de alerta personalizado.
  * @param {string} title - O título do alerta.
  * @param {string} message - A mensagem a ser exibida.
- * @param {'success' | 'warning' | 'danger' | 'info'} type - O tipo do alerta (para estilização).
+ * @param {'success' | 'warning' | 'danger' | 'info' | 'primary'} type - O tipo do alerta (para estilização).
  */
-function showAlert(title, message, type) {
+function showAlert(title, message, type = 'info') { // 'info' como padrão, pode ser 'danger' se preferir
     const modalElement = document.getElementById('customAlertModal');
-    const modalHeader = document.getElementById('customAlertModalHeader');
-    const modalTitle = document.getElementById('customAlertModalLabel');
-    const modalMessage = document.getElementById('customAlertMessage');
+    if (!modalElement) {
+        console.error("Elemento modal '#customAlertModal' não encontrado. Verifique seu HTML.");
+        // Fallback para alert() nativo se o modal não for encontrado,
+        // mas o ideal é que o modal HTML esteja sempre presente.
+        alert(`${title}: ${message}`);
+        return;
+    }
 
-    // Remove classes de tipo anteriores
-    modalHeader.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'bg-info');
+    const modalHeader = modalElement.querySelector('#customAlertModalHeader');
+    const modalTitle = modalElement.querySelector('#customAlertModalLabel');
+    const modalMessage = modalElement.querySelector('#customAlertMessage');
+    const modalButton = modalElement.querySelector('.modal-footer .btn-secondary'); // Botão 'OK'
 
-    // Adiciona a classe de tipo apropriada
+    // Remove classes de tipo anteriores de todos os cabeçalhos de modal, se existirem
+    modalHeader.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'bg-info', 'bg-primary');
+
+    // Adiciona a classe de tipo apropriada e define o texto do botão 'OK'
     switch (type) {
         case 'success':
             modalHeader.classList.add('bg-success');
+            modalButton.textContent = 'Fechar'; // Ou 'OK'
             break;
         case 'warning':
             modalHeader.classList.add('bg-warning');
+            modalButton.textContent = 'Entendi';
             break;
         case 'danger':
             modalHeader.classList.add('bg-danger');
+            modalButton.textContent = 'OK';
             break;
         case 'info':
             modalHeader.classList.add('bg-info');
+            modalButton.textContent = 'Certo';
+            break;
+        case 'primary':
+            modalHeader.classList.add('bg-primary');
+            modalButton.textContent = 'Ok';
             break;
         default:
-            modalHeader.classList.add('bg-primary'); // Default se nenhum tipo for fornecido
+            modalHeader.classList.add('bg-secondary'); // Um tipo padrão neutro
+            modalButton.textContent = 'Fechar';
             break;
     }
 
@@ -177,11 +195,12 @@ function handleFormSaidaSubmit(e) {
     const cliente = document.getElementById('cliente').value.trim();
     const dataSaida = document.getElementById('dataSaida').value; // Formato YYYY-MM-DD
     const previsaoRetorno = document.getElementById('previsaoRetorno').value; // Formato YYYY-MM-DD
+    const tipoLocacao = document.getElementById('tipoLocacao').value; // NOVO: Captura o tipo de locação
 
     const radiosParaSair = Array.from(document.querySelectorAll('#tabelaRadiosSaida tbody tr')).map(tr => tr.dataset.numeroSerie);
 
-    if (!nfNumero || !cliente || !dataSaida) {
-        showAlert('Campos Obrigatórios', 'Número da NF, Cliente e Data de Saída são obrigatórios.', 'warning');
+    if (!nfNumero || !cliente || !dataSaida || !tipoLocacao) { // tipoLocacao agora é obrigatório
+        showAlert('Campos Obrigatórios', 'Número da NF, Cliente, Data de Saída e Tipo de Locação são obrigatórios.', 'warning');
         return;
     }
     if (radiosParaSair.length === 0) {
@@ -226,7 +245,8 @@ function handleFormSaidaSubmit(e) {
         dataSaida, // Envia como YYYY-MM-DD
         previsaoRetorno: previsaoRetorno || null, // Envia como YYYY-MM-DD ou null
         // dataHoraRegistro: new Date().toISOString(), // O backend deve cuidar disso
-        radiosSaida: radiosParaSair
+        radios: radiosParaSair, // Correção do nome do campo para 'radios'
+        tipoLocacao // NOVO: Inclui o tipo de locação
     };
 
     const confirmarModal = new bootstrap.Modal(document.getElementById('confirmarSalvarNFModal'));
@@ -253,7 +273,7 @@ async function submeterNFSaida() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(dadosNFParaEnvio)
+            body: JSON.stringify(dadosNFParaEnvio) // dadosNFParaEnvio já contém tipoLocacao
         });
 
         const data = await res.json(); // Tenta parsear como JSON
@@ -264,7 +284,7 @@ async function submeterNFSaida() {
             document.querySelector('#tabelaRadiosSaida tbody').innerHTML = '';
             radiosAdicionadosNF.clear();
             dadosNFParaEnvio = null;
-             // Reseta a data de saída para hoje
+            // Reseta a data de saída para hoje
             const dataSaidaInput = document.getElementById('dataSaida');
             if (dataSaidaInput) dataSaidaInput.valueAsDate = new Date();
         } else {
