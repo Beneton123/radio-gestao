@@ -13,6 +13,7 @@ const Counter = require('./models/Counter'); // Para IDs sequenciais
 
 const app = express();
 const port = process.env.PORT || 3000;
+const host = process.env.HOST || '0.0.0.0';
 const jwtSecret = process.env.JWT_SECRET || 'supersecretjwtkey'; // Chave secreta para JWT
 
 // Middlewares
@@ -51,9 +52,12 @@ mongoose.connect(process.env.MONGODB_URI)
             console.log('Usuário administrador padrão criado.');
         }
 
-        app.listen(port, () => {
-            console.log(`Servidor rodando na porta ${port}`);
-        });
+       app.listen(port, host, () => {
+    console.log(`✅ Servidor rodando.`);
+    console.log(`   Acessível localmente em: http://localhost:${port}`);
+    console.log(`   Acessível na rede em: http://${host === '0.0.0.0' ? '<SEU_IP_DE_REDE>' : host}:${port}`);
+    console.log(`   (Substitua '<SEU_IP_DE_REDE>' pelo IP real da sua máquina na rede, ex: 10.110.120.213).`);
+});
     })
     .catch(err => {
         console.error('Erro de conexão com o MongoDB:', err);
@@ -319,39 +323,69 @@ app.put('/radios/:numeroSerie/patrimonio', autenticarToken, async (req, res) => 
 // Rotas de Notas Fiscais
 app.post('/nf/saida', autenticarToken, async (req, res) => {
     try {
-        const { nfNumero, cliente, dataSaida, previsaoRetorno, radios, observacoes, tipoLocacao } = req.body; // Adicionado tipoLocacao
+        const { nfNumero, cliente, dataSaida, previsaoRetorno, radios, observacoes, tipoLocacao } = req.body;
 
-        // Validação básica
-        if (!nfNumero || !cliente || !dataSaida || !Array.isArray(radios) || radios.length === 0 || !tipoLocacao) { // tipoLocacao também é obrigatório agora
-            return res.status(400).json({ message: 'Dados da NF de Saída incompletos ou inválidos. (Inclua tipoLocacao)' });
+        // --- Início dos console.log para depuração (Remova em produção) ---
+        console.log('--- Início da Requisição POST /nf/saida ---');
+        console.log('Dados recebidos no backend para NF de Saída:');
+        console.log('nfNumero:', nfNumero);
+        console.log('cliente:', cliente);
+        console.log('dataSaida:', dataSaida);
+        console.log('previsaoRetorno:', previsaoRetorno);
+        console.log('radios:', radios);
+        console.log('tipoLocacao:', tipoLocacao);
+        console.log('Tipo de tipoLocacao:', typeof tipoLocacao);
+        console.log('É array radios?', Array.isArray(radios));
+        console.log('Tamanho radios:', radios ? radios.length : 'N/A');
+        console.log('--- Fim dos Dados Recebidos ---');
+        // --- Fim dos console.log para depuração ---
+
+        // Validação básica de todos os campos obrigatórios
+        if (!nfNumero || !cliente || !dataSaida || !Array.isArray(radios) || radios.length === 0 || !tipoLocacao) {
+            return res.status(400).json({ message: 'Dados da NF de Saída incompletos ou inválidos. (Todos os campos são obrigatórios: NF, Cliente, Data Saída, Rádios, Tipo de Locação)' });
+        }
+
+        // Validação específica para o valor de tipoLocacao
+        if (!['Mensal', 'Anual'].includes(tipoLocacao)) {
+            return res.status(400).json({ message: 'Tipo de Locação inválido. Deve ser "Mensal" ou "Anual".' });
         }
 
         // Verifica se a NF de saída já existe (nfNumero e tipo 'Saída')
         const nfExistente = await NotaFiscal.findOne({ nfNumero, tipo: 'Saída' });
         if (nfExistente) {
-            return res.status(409).json({ message: `Já existe uma NF de Saída com o número ${nfNumero}.` });
+            return res.status(409).json({ message: `Já existe uma NF de Saída com o número ${nfNumero}. Por favor, use um número diferente.` });
         }
 
         const radiosParaAtualizar = [];
-        const radiosNaoDisponiveis = [];
+        const radiosNaoEncontradosOuIndisponiveis = [];
 
+        // Verifica cada rádio fornecido na requisição
         for (const numeroSerie of radios) {
             const radio = await Radio.findOne({ numeroSerie });
             if (!radio) {
-                return res.status(404).json({ message: `Rádio com série ${numeroSerie} não encontrado.` });
-            }
-            // Verifica se o rádio está disponível para locação
-            if (radio.status !== 'Disponível') {
-                radiosNaoDisponiveis.push({ numeroSerie, statusAtual: radio.status, nfAtual: radio.nfAtual });
+                // Se o rádio não for encontrado, adiciona à lista de problemas
+                radiosNaoEncontradosOuIndisponiveis.push({ numeroSerie, problema: 'não encontrado' });
+            } else if (radio.status !== 'Disponível') {
+                // Se o rádio não estiver disponível, adiciona à lista de problemas
+                radiosNaoEncontradosOuIndisponiveis.push({ numeroSerie, problema: `status "${radio.status}"`, nfAtual: radio.nfAtual });
             } else {
+                // Se o rádio estiver disponível, adiciona para atualização posterior
                 radiosParaAtualizar.push(radio);
             }
         }
 
-        if (radiosNaoDisponiveis.length > 0) {
+        // Se houver rádios não encontrados ou indisponíveis, retorna erro 400
+        if (radiosNaoEncontradosOuIndisponiveis.length > 0) {
+            const mensagensDeErroRadio = radiosNaoEncontradosOuIndisponiveis.map(item => {
+                if (item.problema === 'não encontrado') {
+                    return `Rádio com série "${item.numeroSerie}" não encontrado.`;
+                } else {
+                    return `Rádio "${item.numeroSerie}" não está disponível (Status: ${item.problema.replace('status "', '').replace('"', '')}${item.nfAtual ? `, NF: ${item.nfAtual}` : ''}).`;
+                }
+            });
             return res.status(400).json({
-                message: 'Alguns rádios não estão disponíveis para locação.',
-                radiosNaoDisponiveis
+                message: 'Problemas com os rádios selecionados:',
+                detalhes: mensagensDeErroRadio
             });
         }
 
@@ -362,88 +396,144 @@ app.post('/nf/saida', autenticarToken, async (req, res) => {
             cliente,
             dataSaida,
             previsaoRetorno,
-            radios,
-            observacoes,
-            usuarioRegistro: req.usuario.email, // Assume que req.usuario.email está disponível pelo middleware de autenticação
+            radios, // Armazena os numeroSerie dos rádios
+            observacoes, // Inclui observações se existirem no payload
+            usuarioRegistro: req.usuario.email, // Assume que req.usuario.email está disponível
             tipoLocacao // Salva o tipo de locação na NF
         });
         await novaNf.save();
 
         // Atualiza o status de cada rádio para 'Ocupado' e associa a NF
-        for (const radio of radiosParaAtualizar) {
+        // Usar Promise.all para executar as atualizações em paralelo de forma eficiente
+        await Promise.all(radiosParaAtualizar.map(async (radio) => {
             await Radio.updateOne(
                 { numeroSerie: radio.numeroSerie },
                 {
                     $set: {
                         status: 'Ocupado',
                         nfAtual: nfNumero,
-                        ultimaNfSaida: nfNumero,
+                        ultimaNfSaida: nfNumero, // Opcional: registrar a última NF de saída no rádio
                         tipoLocacaoAtual: tipoLocacao // NOVO: Atualiza o tipo de locação no rádio
                     }
                 }
             );
-        }
+        }));
 
         res.status(201).json({ message: 'NF de Saída registrada com sucesso!', nf: novaNf });
     } catch (error) {
         console.error('Erro ao registrar NF de Saída:', error);
+        // Se o erro for de validação do Mongoose, pode ser mais específico
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: `Erro de validação: ${error.message}` });
+        }
         res.status(500).json({ message: 'Erro interno do servidor ao registrar NF de Saída.' });
     }
 });
 
 app.post('/nf/entrada', autenticarToken, async (req, res) => {
     try {
-        const { nfNumero, dataEntrada, observacoes } = req.body;
+        // Agora, 'radiosRetornados' é esperado no corpo da requisição
+        const { nfNumero, dataEntrada, observacoes, radiosRetornados } = req.body;
 
-        if (!nfNumero || !dataEntrada) {
-            return res.status(400).json({ message: 'Número da NF e data de entrada são obrigatórios.' });
+        // Validação inicial dos campos obrigatórios
+        if (!nfNumero || !dataEntrada || !Array.isArray(radiosRetornados) || radiosRetornados.length === 0) {
+            return res.status(400).json({ message: 'Dados da NF de Entrada incompletos. Número da NF, Data de Entrada e Rádios Retornados são obrigatórios.' });
         }
 
-        const nf = await NotaFiscal.findOne({ nfNumero, tipo: 'Saída' });
+        // Busca a Nota Fiscal de Saída original
+        const nfSaida = await NotaFiscal.findOne({ nfNumero, tipo: 'Saída' });
 
-        if (!nf) {
-            return res.status(404).json({ message: 'NF de Saída não encontrada.' });
+        if (!nfSaida) {
+            return res.status(404).json({ message: `NF de Saída com o número ${nfNumero} não encontrada.` });
         }
 
-        if (nf.dataEntrada) {
-            return res.status(400).json({ message: `A NF ${nfNumero} já possui uma data de entrada registrada (${new Date(nf.dataEntrada).toLocaleDateString()}).` });
+        // Verifica se a NF de Saída já possui uma data de entrada registrada (se for o caso de uma entrada única para a NF)
+        // Se a sua lógica permite múltiplas entradas parciais para a mesma NF, você pode ajustar esta validação.
+        // Por enquanto, ela impede uma segunda entrada completa.
+        if (nfSaida.dataEntrada) {
+            return res.status(400).json({ message: `A NF ${nfNumero} já possui uma data de entrada registrada (${new Date(nfSaida.dataEntrada).toLocaleDateString('pt-BR')}).` });
         }
 
         // Registra a data de entrada na NF original
-        nf.dataEntrada = dataEntrada;
+        nfSaida.dataEntrada = dataEntrada;
+        // Adiciona observações, garantindo que 'observacoes' seja um array
         if (observacoes) {
-            nf.observacoes.push(...observacoes); // Adiciona novas observações
+            if (Array.isArray(observacoes)) {
+                nfSaida.observacoes.push(...observacoes);
+            } else if (typeof observacoes === 'string') {
+                nfSaida.observacoes.push(observacoes);
+            }
         }
-        await nf.save();
+        await nfSaida.save(); // Salva a atualização na Nota Fiscal
 
-        // Atualiza o status dos rádios para 'Disponível'
-        for (const numeroSerie of nf.radios) {
+        // Prepara para verificar e atualizar os rádios retornados
+        const seriesRadiosNaNfSaida = nfSaida.radios.map(s => s.toString()); // Garante que são strings para comparação
+        const radiosParaAtualizar = [];
+        const radiosComProblemas = [];
+
+        for (const retornoRadio of radiosRetornados) {
+            const { numeroSerie, statusRetorno } = retornoRadio;
+
+            // Valida os dados de cada rádio retornado
+            if (!numeroSerie || !statusRetorno) {
+                radiosComProblemas.push({ numeroSerie: numeroSerie || 'N/A', problema: 'dados incompletos para o rádio' });
+                continue;
+            }
+            if (!['Disponível', 'Manutenção'].includes(statusRetorno)) {
+                radiosComProblemas.push({ numeroSerie, problema: `status de retorno inválido: "${statusRetorno}"` });
+                continue;
+            }
+            // Verifica se o rádio retornado realmente estava na NF de Saída original
+            if (!seriesRadiosNaNfSaida.includes(numeroSerie)) {
+                radiosComProblemas.push({ numeroSerie, problema: 'não pertence a esta NF de Saída' });
+                continue;
+            }
+
+            const radioNoEstoque = await Radio.findOne({ numeroSerie });
+
+            if (!radioNoEstoque) {
+                radiosComProblemas.push({ numeroSerie, problema: 'não encontrado no estoque' });
+                continue;
+            }
+            // Verifica se o rádio está atualmente 'Ocupado' por esta NF
+            if (radioNoEstoque.status !== 'Ocupado' || radioNoEstoque.nfAtual !== nfNumero) {
+                radiosComProblemas.push({ numeroSerie, problema: `status atual "${radioNoEstoque.status}" ou não associado a esta NF (${radioNoEstoque.nfAtual || 'N/A'})` });
+                continue;
+            }
+
+            radiosParaAtualizar.push({ radio: radioNoEstoque, statusRetorno });
+        }
+
+        // Se houver rádios com problemas, retorna um erro 400
+        if (radiosComProblemas.length > 0) {
+            const mensagensDeErro = radiosComProblemas.map(item => {
+                return `Rádio "${item.numeroSerie}": ${item.problema}.`;
+            });
+            return res.status(400).json({
+                message: 'Problemas encontrados com os rádios retornados:',
+                detalhes: mensagensDeErro
+            });
+        }
+
+        // Atualiza o status de cada rádio retornado
+        await Promise.all(radiosParaAtualizar.map(async ({ radio, statusRetorno }) => {
             await Radio.updateOne(
-                { numeroSerie: numeroSerie },
+                { numeroSerie: radio.numeroSerie },
                 {
                     $set: {
-                        status: 'Disponível',
-                        nfAtual: null,
-                        tipoLocacaoAtual: null // NOVO: Limpa o tipo de locação no rádio ao retornar
+                        status: statusRetorno, // Pode ser 'Disponível' ou 'Manutenção'
+                        nfAtual: null, // Limpa a referência à NF atual
+                        tipoLocacaoAtual: null // Limpa o tipo de locação no rádio ao retornar
                     }
                 }
             );
-        }
+        }));
 
-        res.status(200).json({ message: `Retorno da NF ${nfNumero} registrado com sucesso!`, nf });
+        res.status(200).json({ message: `Retorno da NF ${nfNumero} registrado com sucesso!`, nf: nfSaida });
     } catch (error) {
         console.error('Erro ao registrar retorno da NF:', error);
-        res.status(500).json({ message: 'Erro interno do servidor ao registrar retorno da NF.' });
-    }
-});
-
-app.get('/nf', autenticarToken, async (req, res) => {
-    try {
-        const notasFiscais = await NotaFiscal.find().sort({ dataSaida: -1, dataEntrada: -1 });
-        res.json(notasFiscais);
-    } catch (error) {
-        console.error('Erro ao listar notas fiscais:', error);
-        res.status(500).json({ message: 'Erro interno do servidor.' });
+        // Retorna uma mensagem de erro mais genérica para erros inesperados
+        res.status(500).json({ message: `Erro interno do servidor ao registrar retorno da NF: ${error.message || 'Verifique o console do servidor para mais detalhes.'}` });
     }
 });
 
@@ -465,6 +555,17 @@ app.get('/nf/:nfNumero', autenticarToken, async (req, res) => {
         res.json({ ...nf, radios: radiosComDetalhes });
     } catch (error) {
         console.error('Erro ao buscar nota fiscal por número:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
+app.get('/nf', autenticarToken, async (req, res) => {
+    try {
+        // Ordena por data de saída e depois por data de entrada (decrescente)
+        const notasFiscais = await NotaFiscal.find().sort({ dataSaida: -1, dataEntrada: -1 });
+        res.json(notasFiscais);
+    } catch (error) {
+        console.error('Erro ao listar notas fiscais:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
