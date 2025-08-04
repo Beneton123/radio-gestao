@@ -2,11 +2,19 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        checkAuthentication('saida'); // Verifica permissão para 'saida' ou 'admin'
+        // Assume que checkAuthentication está definido em auth.js
+        if (typeof checkAuthentication === 'function') {
+            checkAuthentication('saida'); // Verifica permissão para 'saida' ou 'admin'
+        } else {
+            console.warn("checkAuthentication não está definida. Verifique se auth.js está carregado corretamente.");
+            // Opcional: redirecionar ou mostrar alerta se a autenticação for crítica
+            // window.location.href = 'login.html'; 
+        }
 
         const formSaida = document.getElementById('formSaida');
         const btnAdicionarRadio = document.getElementById('btnAdicionarRadio');
         const btnConfirmarEnvioNF = document.getElementById('btnConfirmarEnvioNF');
+        const dataSaidaInput = document.getElementById('dataSaida');
 
         if (formSaida) {
             formSaida.addEventListener('submit', handleFormSaidaSubmit);
@@ -17,40 +25,53 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             // Configura data de saída padrão para hoje
-            const dataSaidaInput = document.getElementById('dataSaida');
             if (dataSaidaInput) {
                 dataSaidaInput.valueAsDate = new Date();
             }
+        } else {
+            console.error("Elemento '#formSaida' não encontrado. Verifique seu HTML.");
         }
+
         if (btnAdicionarRadio) {
             btnAdicionarRadio.addEventListener('click', adicionarRadioNaTabela);
+        } else {
+            console.error("Elemento '#btnAdicionarRadio' não encontrado. Verifique seu HTML.");
         }
+
         if (btnConfirmarEnvioNF) {
             btnConfirmarEnvioNF.addEventListener('click', submeterNFSaida);
+        } else {
+            console.error("Elemento '#btnConfirmarEnvioNF' não encontrado. Verifique seu HTML.");
         }
 
     } catch (error) {
-        console.error("Erro na inicialização da página NF de Saída:", error.message);
-        showAlert('Erro de Inicialização', 'Ocorreu um erro ao carregar a página. Tente novamente mais tarde.', 'danger');
+        console.error("Erro na inicialização da página NF de Saída:", error.message, error.stack);
+        // Garante que showAlert é chamado mesmo que haja um erro crítico na inicialização
+        if (typeof showAlert === 'function') {
+            showAlert('Erro de Inicialização', 'Ocorreu um erro ao carregar a página. Tente novamente mais tarde.', 'danger');
+        } else {
+            alert('Erro de Inicialização: Ocorreu um erro ao carregar a página. Tente novamente mais tarde.');
+        }
     }
 });
 
-const radiosAdicionadosNF = new Set(); // Usar um nome diferente para evitar conflito com outros scripts
+// Usar um Map para armazenar rádios para fácil busca e deleção, e para armazenar objetos completos
+const radiosAdicionadosNF = new Map(); // Key: numeroSerie, Value: objeto completo do rádio
 let dadosNFParaEnvio = null; // Para armazenar os dados da NF antes de confirmar
 
 /**
  * Exibe um modal de alerta personalizado.
+ * Esta função deve estar disponível globalmente ou no mesmo escopo.
+ * Ela também pode estar no seu ui.js, se for usada em várias páginas.
  * @param {string} title - O título do alerta.
  * @param {string} message - A mensagem a ser exibida.
  * @param {'success' | 'warning' | 'danger' | 'info' | 'primary'} type - O tipo do alerta (para estilização).
  */
-function showAlert(title, message, type = 'info') { // 'info' como padrão, pode ser 'danger' se preferir
+function showAlert(title, message, type = 'info') {
     const modalElement = document.getElementById('customAlertModal');
     if (!modalElement) {
         console.error("Elemento modal '#customAlertModal' não encontrado. Verifique seu HTML.");
-        // Fallback para alert() nativo se o modal não for encontrado,
-        // mas o ideal é que o modal HTML esteja sempre presente.
-        alert(`${title}: ${message}`);
+        alert(`${title}: ${message}`); // Fallback
         return;
     }
 
@@ -59,14 +80,14 @@ function showAlert(title, message, type = 'info') { // 'info' como padrão, pode
     const modalMessage = modalElement.querySelector('#customAlertMessage');
     const modalButton = modalElement.querySelector('.modal-footer .btn-secondary'); // Botão 'OK'
 
-    // Remove classes de tipo anteriores de todos os cabeçalhos de modal, se existirem
+    // Remove classes de tipo anteriores
     modalHeader.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'bg-info', 'bg-primary');
 
     // Adiciona a classe de tipo apropriada e define o texto do botão 'OK'
     switch (type) {
         case 'success':
             modalHeader.classList.add('bg-success');
-            modalButton.textContent = 'Fechar'; // Ou 'OK'
+            modalButton.textContent = 'Fechar';
             break;
         case 'warning':
             modalHeader.classList.add('bg-warning');
@@ -121,7 +142,12 @@ async function adicionarRadioNaTabela() {
 
     try {
         const token = localStorage.getItem('token');
-        // !!! MUDANÇA CRÍTICA DE PERFORMANCE: Buscar rádio específico !!!
+        if (!token) {
+            showAlert('Erro de Autenticação', 'Você não está logado. Por favor, faça login novamente.', 'danger');
+            window.location.href = 'login.html'; // Redireciona para o login
+            return;
+        }
+
         const res = await fetch(`/radios/${numeroSerie}`, { // URL Relativa e busca por SÉRIE
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -130,23 +156,19 @@ async function adicionarRadioNaTabela() {
             if (res.status === 404) {
                 showAlert('Não Encontrado', `Rádio com número de série "${numeroSerie}" não encontrado.`, 'danger');
             } else {
-                const errorData = await res.json().catch(() => null);
-                showAlert('Erro ao Buscar', `Falha ao buscar rádio: ${errorData ? errorData.message : res.statusText}`, 'danger');
+                const errorData = await res.json().catch(() => ({ message: res.statusText }));
+                showAlert('Erro ao Buscar', `Falha ao buscar rádio: ${errorData.message}`, 'danger');
             }
             return;
         }
 
         const radio = await res.json();
 
-        if (radio.status === 'Ocupado') {
-            showAlert('Rádio Ocupado', `O rádio "${numeroSerie}" já está ocupado na NF ${radio.nfAtual || ''}.`, 'warning');
+        // Removi a condição `radio.status === 'Ocupado'` para não duplicar, já que `!Disponível` cobre isso
+        if (radio.status !== 'Disponível') {
+            showAlert('Rádio Indisponível', `O rádio "${numeroSerie}" não está disponível para locação (Status: ${radio.status}).`, 'warning');
             return;
         }
-        if (radio.status !== 'Disponível') { // Exemplo, pode ter outros status como 'Manutenção'
-            showAlert('Status Inválido', `O rádio "${numeroSerie}" não está disponível (Status: ${radio.status}).`, 'warning');
-            return;
-        }
-
 
         const tabelaBody = document.querySelector('#tabelaRadiosSaida tbody');
         const tr = document.createElement('tr');
@@ -165,7 +187,7 @@ async function adicionarRadioNaTabela() {
         });
 
         tabelaBody.appendChild(tr);
-        radiosAdicionadosNF.add(radio.numeroSerie);
+        radiosAdicionadosNF.set(radio.numeroSerie, radio); // Adiciona o objeto rádio completo ao Map
         numeroSerieInput.value = '';
         numeroSerieInput.focus();
 
@@ -182,9 +204,8 @@ async function adicionarRadioNaTabela() {
 
 function dataEhValida(isoDateString) {
     if (!isoDateString) return false;
-    const data = new Date(isoDateString);
-    // Checa se a data é válida e se o ano é razoável (ex: não é ano 0001)
-    return !isNaN(data.getTime()) && data.toISOString().slice(0,10) === isoDateString && data.getFullYear() > 1900;
+    const data = new Date(isoDateString + "T00:00:00"); // Adiciona T00:00:00 para evitar problemas de fuso
+    return !isNaN(data.getTime()) && data.toISOString().slice(0, 10) === isoDateString && data.getFullYear() > 1900;
 }
 
 function handleFormSaidaSubmit(e) {
@@ -197,12 +218,20 @@ function handleFormSaidaSubmit(e) {
     const previsaoRetorno = document.getElementById('previsaoRetorno').value; // Formato YYYY-MM-DD
     const tipoLocacao = document.getElementById('tipoLocacao').value; // NOVO: Captura o tipo de locação
 
+    // Pega os números de série de todos os rádios na tabela
     const radiosParaSair = Array.from(document.querySelectorAll('#tabelaRadiosSaida tbody tr')).map(tr => tr.dataset.numeroSerie);
 
-    if (!nfNumero || !cliente || !dataSaida || !tipoLocacao) { // tipoLocacao agora é obrigatório
+    if (!nfNumero || !cliente || !dataSaida || !tipoLocacao) {
         showAlert('Campos Obrigatórios', 'Número da NF, Cliente, Data de Saída e Tipo de Locação são obrigatórios.', 'warning');
         return;
     }
+
+    // Valida se o tipoLocacao é um dos valores esperados, e não o "Selecione..." com value=""
+    if (tipoLocacao === "") {
+        showAlert('Campo Inválido', 'Por favor, selecione um Tipo de Locação válido (Mensal ou Anual).', 'warning');
+        return;
+    }
+
     if (radiosParaSair.length === 0) {
         showAlert('Nenhum Rádio', 'Adicione pelo menos um rádio à NF.', 'warning');
         return;
@@ -212,20 +241,20 @@ function handleFormSaidaSubmit(e) {
         showAlert('Data Inválida', 'A Data de Saída é inválida.', 'warning');
         return;
     }
-    const dataSaidaObj = new Date(dataSaida + "T00:00:00"); // Adiciona T00:00:00 para evitar problemas de fuso ao comparar somente data
+    const dataSaidaObj = new Date(dataSaida + "T00:00:00");
     const hoje = new Date();
     hoje.setHours(0,0,0,0); // Normaliza 'hoje' para comparar somente datas
 
-    // Permite data de saída no futuro próximo (ex: até 7 dias), mas não muito distante.
-    // Ou pode remover essa checagem se quiser permitir datas futuras sem restrição.
-    const umaSemanaAposHoje = new Date();
-    umaSemanaAposHoje.setDate(hoje.getDate() + 7);
+    // Regra: Data de Saída pode ser hoje ou no passado, mas não muito no futuro.
+    // Exemplo: Permitir até 7 dias no futuro.
+    const seteDiasNoFuturo = new Date();
+    seteDiasNoFuturo.setDate(hoje.getDate() + 7);
+    seteDiasNoFuturo.setHours(0,0,0,0);
 
-    if (dataSaidaObj > umaSemanaAposHoje) {
-        showAlert('Data Futura', 'A Data de Saída não pode ser muito distante no futuro.', 'warning');
+    if (dataSaidaObj > seteDiasNoFuturo) {
+        showAlert('Data Futura', 'A Data de Saída não pode ser mais de 7 dias no futuro.', 'warning');
         return;
     }
-    // A data de saída pode ser hoje ou no passado. A validação de "não pode ser no futuro" do seu código original foi flexibilizada.
 
     if (previsaoRetorno) {
         if (!dataEhValida(previsaoRetorno)) {
@@ -242,11 +271,11 @@ function handleFormSaidaSubmit(e) {
     dadosNFParaEnvio = {
         nfNumero,
         cliente,
-        dataSaida, // Envia como YYYY-MM-DD
-        previsaoRetorno: previsaoRetorno || null, // Envia como YYYY-MM-DD ou null
-        // dataHoraRegistro: new Date().toISOString(), // O backend deve cuidar disso
-        radios: radiosParaSair, // Correção do nome do campo para 'radios'
-        tipoLocacao // NOVO: Inclui o tipo de locação
+        dataSaida,
+        previsaoRetorno: previsaoRetorno || null, // Envia null se vazio
+        radios: radiosParaSair,
+        tipoLocacao // INCLUÍDO NO PAYLOAD
+        // observacoes: [] // Adicione observações se houver um campo para isso
     };
 
     const confirmarModal = new bootstrap.Modal(document.getElementById('confirmarSalvarNFModal'));
@@ -255,45 +284,55 @@ function handleFormSaidaSubmit(e) {
 
 async function submeterNFSaida() {
     if (!dadosNFParaEnvio) {
-        showAlert('Erro Interno', 'Dados da NF não estão prontos para envio.', 'danger');
+        showAlert('Erro Interno', 'Dados da NF não estão prontos para envio. Tente novamente.', 'danger');
         return;
     }
     const btnConfirmar = document.getElementById('btnConfirmarEnvioNF');
     const btnSalvarNF = document.getElementById('btnSalvarNF'); // Botão principal do formulário
 
+    // Desabilita botões para evitar envios múltiplos
     if (btnConfirmar) btnConfirmar.disabled = true;
-    if (btnSalvarNF) btnSalvarNF.disabled = true; // Desabilita o botão principal também
+    if (btnSalvarNF) btnSalvarNF.disabled = true;
 
     const token = localStorage.getItem('token');
+    if (!token) {
+        showAlert('Erro de Autenticação', 'Sua sessão expirou. Por favor, faça login novamente.', 'danger');
+        window.location.href = 'login.html';
+        return;
+    }
 
     try {
-        const res = await fetch('/nf/saida', { // URL Relativa
+        const res = await fetch('/nf/saida', { // URL Relativa (assumindo que o frontend é servido do mesmo domínio do backend)
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(dadosNFParaEnvio) // dadosNFParaEnvio já contém tipoLocacao
+            body: JSON.stringify(dadosNFParaEnvio)
         });
 
-        const data = await res.json(); // Tenta parsear como JSON
+        // Tenta parsear a resposta como JSON. Mesmo em erro, o servidor pode enviar JSON.
+        const data = await res.json().catch(() => ({ message: `Erro desconhecido: Status ${res.status}` }));
 
         if (res.ok) {
             showAlert('Sucesso!', data.message || 'NF de Saída registrada com sucesso.', 'success');
+            // Limpa o formulário e o estado local
             document.getElementById('formSaida').reset();
             document.querySelector('#tabelaRadiosSaida tbody').innerHTML = '';
             radiosAdicionadosNF.clear();
             dadosNFParaEnvio = null;
-            // Reseta a data de saída para hoje
+            // Reseta a data de saída para hoje após sucesso
             const dataSaidaInput = document.getElementById('dataSaida');
             if (dataSaidaInput) dataSaidaInput.valueAsDate = new Date();
         } else {
+            // Se houver mensagem de erro do backend, use-a. Caso contrário, uma genérica.
             showAlert('Erro ao Salvar NF', data.message || 'Não foi possível registrar a NF de Saída.', 'danger');
         }
     } catch (erro) {
-        console.error('Erro ao submeter NF de saída:', erro);
-        showAlert('Erro de Conexão', 'Falha ao comunicar com o servidor para salvar a NF.', 'danger');
+        console.error('Erro na requisição de saída de NF:', erro);
+        showAlert('Erro de Conexão', 'Falha ao comunicar com o servidor para salvar a NF. Verifique sua rede.', 'danger');
     } finally {
+        // Habilita os botões novamente e fecha o modal de confirmação
         if (btnConfirmar) btnConfirmar.disabled = false;
         if (btnSalvarNF) btnSalvarNF.disabled = false;
         const confirmarModalEl = document.getElementById('confirmarSalvarNFModal');
@@ -303,3 +342,18 @@ async function submeterNFSaida() {
         }
     }
 }
+
+// **Função de Logout (geralmente em auth.js, mas incluída para completude)**
+// Certifique-se que esta lógica está em auth.js e que auth.js é carregado ANTES de saida.js
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            localStorage.removeItem('userPermissions');
+            localStorage.removeItem('userName');
+            window.location.href = 'login.html'; // Redireciona para a página de login
+        });
+    }
+});
