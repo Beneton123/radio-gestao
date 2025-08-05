@@ -261,7 +261,7 @@ function aplicarFiltro() {
         const tdAcoes = document.createElement('td');
         if (r.nfAtual) {
             const btnDetalhes = document.createElement('button');
-            btnDetalhes.className = 'btn btn-sm btn-info btn-details-nf';
+            btnDetalhes.className = 'btn btn-sm btn-danger btn-details-nf';
             btnDetalhes.textContent = 'Detalhes NF';
             btnDetalhes.dataset.nfNumero = r.nfAtual; // Armazena o número da NF
             btnDetalhes.addEventListener('click', () => fetchNfDetails(r.nfAtual));
