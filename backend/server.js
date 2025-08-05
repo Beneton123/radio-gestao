@@ -63,6 +63,7 @@ mongoose.connect(process.env.MONGODB_URI)
             console.log(`   Acessível na rede em: http://${host === '0.0.0.0' ? '<SEU_IP_DE_REDE>' : host}:${port}`);
             console.log(`   (Substitua '<SEU_IP_DE_REDE>' pelo IP real da sua máquina na rede, ex: 10.110.120.213).`);
         });
+
     })
     .catch(err => {
         console.error('Erro de conexão com o MongoDB:', err);
@@ -354,6 +355,7 @@ app.post('/nf/saida', autenticarToken, async (req, res) => {
 
         const radiosParaAtualizar = [];
         const radiosNaoEncontradosOuIndisponiveis = [];
+
         // Verifica cada rádio fornecido na requisição
         for (const numeroSerie of radios) {
             const radio = await Radio.findOne({ numeroSerie });
@@ -413,6 +415,7 @@ app.post('/nf/saida', autenticarToken, async (req, res) => {
                 }
             );
         }));
+
         res.status(201).json({ message: 'NF de Saída registrada com sucesso!', nf: novaNf });
     } catch (error) {
         console.error('Erro ao registrar NF de Saída:', error);
@@ -467,6 +470,8 @@ app.post('/nf/entrada', autenticarToken, async (req, res) => {
 
         for (const retornoRadio of radiosRetornados) {
             const { numeroSerie, statusRetorno } = retornoRadio;
+
+
             // Valida os dados de cada rádio retornado
             if (!numeroSerie || !statusRetorno) {
                 radiosComProblemas.push({ numeroSerie: numeroSerie || 'N/A', problema: 'dados incompletos para o rádio' });
@@ -483,6 +488,7 @@ app.post('/nf/entrada', autenticarToken, async (req, res) => {
             }
 
             const radioNoEstoque = await Radio.findOne({ numeroSerie });
+
             if (!radioNoEstoque) {
                 radiosComProblemas.push({ numeroSerie, problema: 'não encontrado no estoque' });
                 continue;
@@ -520,6 +526,7 @@ app.post('/nf/entrada', autenticarToken, async (req, res) => {
                 }
             );
         }));
+
         res.status(200).json({ message: `Retorno da NF ${nfNumero} registrado com sucesso!`, nf: nfSaida });
     } catch (error) {
         console.error('Erro ao registrar retorno da NF:', error);
@@ -560,6 +567,7 @@ app.get('/nf', autenticarToken, async (req, res) => {
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
+
 // Rotas de Consulta/Histórico
 app.get('/extrato/:numeroSerie', autenticarToken, async (req, res) => {
     try {

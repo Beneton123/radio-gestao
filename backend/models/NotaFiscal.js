@@ -9,8 +9,8 @@ const notaFiscalSchema = new mongoose.Schema({
     radios: [{ type: String, required: true }], // Array de numeroSerie dos rádios
     dataEntrada: { type: Date, default: null },
     observacoes: [{ type: String }],
-    usuarioRegistro: { type: String, required: true }, // Email do usuário que registr
-     tipoLocacao: { type: String, enum: ['Mensal', 'Anual', null], default: null } // Adicionado para NFs de Saída
+    usuarioRegistro: { type: String, required: true }, // Email do usuário que registrou
+    tipoLocacao: { type: String, enum: ['Mensal', 'Anual', null], default: null } // Adicionado para NFs de Saída
 }, { timestamps: true });
 
 // Índice composto para garantir NF única por número e tipo
