@@ -1,63 +1,62 @@
 // frontend/js/login.js
 
+// ALTERADO: Adicionada a URL base da API com o seu IP
+const API_BASE_URL = 'http://10.110.120.237:5000/api';
+
 document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('loginForm');
-    const btnLogin = document.getElementById('btnLogin');
+    const loginForm = document.getElementById('loginForm');
+    const btnLogin = document.getElementById('btnLogin');
 
-    // Verifica se o usuário já está logado e redireciona para o index.html
-    const token = localStorage.getItem('token');
-    if (token) {
-        // Opcional: verificar a validade do token antes de redirecionar.
-        // Por simplicidade, vamos apenas redirecionar se o token existir.
-        window.location.href = 'index.html';
-        return; // Impede que o resto do script da página de login seja executado
-    }
+    const token = localStorage.getItem('token');
+    if (token) {
+        window.location.href = 'index.html';
+        return;
+    }
 
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
 
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const senha = document.getElementById('senha').value;
+            if (btnLogin) {
+                btnLogin.disabled = true;
+                btnLogin.textContent = 'Entrando...';
+            }
 
-            if (btnLogin) {
-                btnLogin.disabled = true;
-                btnLogin.textContent = 'Entrando...';
-            }
+            try {
+                // ALTERADO: Rota padronizada para autenticação
+                const res = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, senha })
+                });
 
-            try {
-                // Usando URL relativa
-                const res = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, senha })
-                });
+                const data = await res.json();
 
-                const data = await res.json();
-
-                if (res.ok) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('permissoes', JSON.stringify(data.permissoes));
-                    if (data.nome) { // Salva o nome do usuário se vier do backend
-                        localStorage.setItem('nomeUsuario', data.nome);
-                    }
-                    window.location.href = 'index.html';
-                } else {
-                    // Usando o showAlert centralizado do ui.js
-                    showAlert('Falha no Login', data.message || 'Credenciais inválidas ou erro no servidor.', 'danger');
-                }
-            } catch (error) {
-                console.error('Erro na requisição de login:', error);
-                showAlert('Erro de Conexão', 'Não foi possível conectar ao servidor. Tente novamente.', 'danger');
-            } finally {
-                if (btnLogin) {
-                    btnLogin.disabled = false;
-                    btnLogin.textContent = 'Entrar';
-                }
-            }
-        });
-    }
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('permissoes', JSON.stringify(data.permissoes));
+                    // O backend agora retorna nomeUsuario, vamos usar esse padrão.
+                    if (data.nomeUsuario) {
+                        localStorage.setItem('nomeUsuario', data.nomeUsuario);
+                    }
+                    window.location.href = 'index.html';
+                } else {
+                    showAlert('Falha no Login', data.message || 'Credenciais inválidas.', 'danger');
+                }
+            } catch (error) {
+                console.error('Erro na requisição de login:', error);
+                showAlert('Erro de Conexão', 'Não foi possível conectar ao servidor.', 'danger');
+            } finally {
+                if (btnLogin) {
+                    btnLogin.disabled = false;
+                    btnLogin.textContent = 'Entrar';
+                }
+            }
+        });
+    }
 });
