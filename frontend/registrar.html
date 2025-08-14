@@ -31,7 +31,14 @@
             <form id="formCadastroRadio" class="pt-4">
                 <div class="mb-3">
                     <label for="modelo" class="form-label">Modelo</label>
-                    <input type="text" class="form-control" id="modelo" required />
+                    <div class="input-group">
+                        <input class="form-control" list="datalistModelos" id="modelo" placeholder="Digite ou selecione um modelo existente..." required>
+                        <datalist id="datalistModelos">
+                            </datalist>
+                        <button type="button" class="btn btn-outline-success" id="btnAbrirModalModelo" style="display: none;" title="Cadastrar Novo Modelo">
+                            ➕
+                        </button>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="numeroSerie" class="form-label">Número de Série</label>
@@ -57,6 +64,29 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modalAdicionarModelo" tabindex="-1" aria-labelledby="modalAdicionarModeloLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalAdicionarModeloLabel">Cadastrar Novo Modelo de Rádio</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formAdicionarModelo">
+                        <div class="mb-3">
+                            <label for="novoModeloNome" class="form-label">Nome do Novo Modelo:</label>
+                            <input type="text" class="form-control" id="novoModeloNome" required placeholder="Ex: EP450">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnSalvarNovoModelo">Salvar Modelo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -77,5 +107,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/registrar.js"></script> </body>
+    <script src="js/registrar.js"></script> 
+</body>
 </html>

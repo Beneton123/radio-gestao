@@ -8,10 +8,12 @@ const path = require('path'); // Adicionado o módulo 'path'
 require('dotenv').config(); // Carrega variáveis de ambiente do .env
 
 const Radio = require('./models/Radio');
+const Modelo = require('./models/Modelo');
 const Usuario = require('./models/Usuario');
 const NotaFiscal = require('./models/NotaFiscal');
 const PedidoManutencao = require('./models/PedidoManutencao');
 const Counter = require('./models/Counter'); // Para IDs sequenciais
+const RadioExcluido = require('./models/RadioExcluido'); 
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -128,7 +130,7 @@ app.post('/login', async (req, res) => {
                 permissoes: usuario.permissoes
             },
             jwtSecret,
-            { expiresIn: '1h' } // Token expira em 1 hora
+            { expiresIn: '8h' } // Token expira em 8 horas
         );
 
         res.json({ token, nomeUsuario: usuario.nome, permissoes: usuario.permissoes });
@@ -192,7 +194,53 @@ app.delete('/usuarios/:email', autenticarToken, autorizarAdmin, async (req, res)
     }
 });
 
+
+// =======================================================
+// ||      INÍCIO: ROTAS DE MODELOS DE RÁDIO             ||
+// =======================================================
+
+// Rota para LISTAR todos os modelos de rádio
+app.get('/api/modelos', autenticarToken, async (req, res) => {
+    try {
+        const modelos = await Modelo.find().sort({ nome: 1 });
+        res.json(modelos);
+    } catch (error) {
+        console.error('Erro ao listar modelos:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
+// Rota para CADASTRAR um novo modelo (Apenas para Admins)
+app.post('/api/modelos', autenticarToken, autorizarAdmin, async (req, res) => {
+    try {
+        const { nome } = req.body;
+        if (!nome || nome.trim() === '') {
+            return res.status(400).json({ message: 'O nome do modelo é obrigatório.' });
+        }
+        
+        const nomeFormatado = nome.trim().toUpperCase();
+
+        const modeloExistente = await Modelo.findOne({ nome: nomeFormatado });
+        if (modeloExistente) {
+            return res.status(409).json({ message: 'Já existe um modelo com este nome.' });
+        }
+
+        const novoModelo = new Modelo({ nome: nomeFormatado });
+        await novoModelo.save();
+        res.status(201).json({ message: 'Modelo cadastrado com sucesso!', modelo: novoModelo });
+    } catch (error) {
+        console.error('Erro ao cadastrar modelo:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao cadastrar modelo.' });
+    }
+});
+
+// =======================================================
+// ||        FIM: ROTAS DE MODELOS DE RÁDIO               ||
+// =======================================================
+
+
 // Rotas de Rádios
+// VV --- ROTA ATUALIZADA --- VV
 app.post('/radios', autenticarToken, async (req, res) => {
     try {
         // Verifica se o usuário tem a permissão 'registrar_radio' ou é 'admin'
@@ -205,20 +253,43 @@ app.post('/radios', autenticarToken, async (req, res) => {
         if (!modelo || !numeroSerie || !frequencia) {
             return res.status(400).json({ message: 'Modelo, Número de Série e Frequência são obrigatórios.' });
         }
+        
+        // ==================================================================
+        // ||        INÍCIO DA NOVA LÓGICA DE VERIFICAÇÃO DO MODELO        ||
+        // ==================================================================
+        
+        const modeloFormatado = modelo.trim().toUpperCase();
+        const modeloExistenteNoCatalogo = await Modelo.findOne({ nome: modeloFormatado });
+
+        if (!modeloExistenteNoCatalogo) {
+            // Se o modelo não for encontrado na coleção de Modelos, retorna um erro.
+            return res.status(400).json({ 
+                message: `O modelo "${modelo}" não é um modelo válido. Cadastre o modelo primeiro ou selecione um da lista.` 
+            });
+        }
+        
+        // ==================================================================
+        // ||         FIM DA NOVA LÓGICA DE VERIFICAÇÃO DO MODELO          ||
+        // ==================================================================
 
         const radioExistente = await Radio.findOne({ numeroSerie });
         if (radioExistente) {
             return res.status(409).json({ message: 'Já existe um rádio com este número de série.' });
         }
 
-        const novoRadio = new Radio({ modelo, numeroSerie, patrimonio, frequencia });
+        // Usa o nome do modelo formatado e validado para salvar o novo rádio
+        const novoRadio = new Radio({ modelo: modeloExistenteNoCatalogo.nome, numeroSerie, patrimonio, frequencia });
         await novoRadio.save();
+        
         res.status(201).json({ message: 'Rádio cadastrado com sucesso!', radio: novoRadio });
+
     } catch (error) {
         console.error('Erro ao cadastrar rádio:', error);
         res.status(500).json({ message: 'Erro interno do servidor ao cadastrar rádio.' });
     }
 });
+// ^^ --- FIM DA ROTA ATUALIZADA --- ^^
+
 app.get('/radios', autenticarToken, async (req, res) => {
     try {
         const { status, nfAtual, search } = req.query;
@@ -261,13 +332,8 @@ app.get('/radios/:numeroSerie', autenticarToken, async (req, res) => {
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
-app.delete('/radios/:numeroSerie', autenticarToken, async (req, res) => {
+app.delete('/radios/:numeroSerie', autenticarToken, autorizarAdmin, async (req, res) => {
     try {
-        // Verifica se o usuário tem a permissão 'admin'
-        if (!req.usuario.permissoes.includes('admin')) {
-            return res.status(403).json({ message: 'Acesso negado. Apenas administradores podem excluir rádios.' });
-        }
-
         const { numeroSerie } = req.params;
         const radio = await Radio.findOne({ numeroSerie });
 
@@ -279,8 +345,20 @@ app.delete('/radios/:numeroSerie', autenticarToken, async (req, res) => {
             return res.status(400).json({ message: `Não é possível excluir o rádio pois ele está com status "${radio.status}".` });
         }
 
+        // Cria o registro no histórico de excluídos
+        const radioDeletado = new RadioExcluido({
+            modelo: radio.modelo,
+            numeroSerie: radio.numeroSerie,
+            patrimonio: radio.patrimonio,
+            frequencia: radio.frequencia,
+            deletadoPor: req.usuario.email // Pega o email do admin logado
+        });
+        await radioDeletado.save();
+
+        // Deleta o rádio da coleção principal
         await Radio.deleteOne({ numeroSerie });
-        res.status(200).json({ message: 'Rádio excluído com sucesso.' });
+
+        res.status(200).json({ message: 'Rádio excluído com sucesso e movido para o histórico.' });
     } catch (error) {
         console.error('Erro ao excluir rádio:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
@@ -318,6 +396,9 @@ app.put('/radios/:numeroSerie/patrimonio', autenticarToken, async (req, res) => 
 });
 
 // Rotas de Notas Fiscais
+// ... (O resto do seu código de NF, Manutenção, etc., continua aqui sem alterações)
+// ...
+// ...
 app.post('/nf/saida', autenticarToken, async (req, res) => {
     try {
         const { nfNumero, cliente, dataSaida, previsaoRetorno, radios, observacoes, tipoLocacao } = req.body;
@@ -689,10 +770,20 @@ app.get('/api/radios/:numeroSerie/historico-completo', autenticarToken, async (r
             }
         });
         // Ordena o histórico por data
-        historico.sort((a, b) => a.data - b.data);
+        historico.sort((a, b) => new Date(a.data) - new Date(b.data));
         res.json({ radio: radio.toObject(), historico });
     } catch (error) {
         console.error('Erro ao buscar histórico completo do rádio:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
+app.get('/api/radios-excluidos', autenticarToken, autorizarAdmin, async (req, res) => {
+    try {
+        const excluidos = await RadioExcluido.find().sort({ deletadoEm: -1 });
+        res.json(excluidos);
+    } catch (error) {
+        console.error('Erro ao listar rádios excluídos:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
@@ -978,8 +1069,6 @@ app.get('/manutencao/estoque', autenticarToken, async (req, res) => {
         console.error('Erro ao buscar estoque de manutenção:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
+
+
 });
-
-//ddddddddd
-
-///dddddd

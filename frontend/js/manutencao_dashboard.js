@@ -563,13 +563,13 @@ async function handleConfirmarIniciarManutencaoComTecnico() {
     try {
         const token = localStorage.getItem('token');
         const res = await fetch(`/manutencao/pedidos/${idPedido}/iniciar`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ tecnico: tecnicoSelecionado })
-        });
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ tecnicoResponsavel: tecnicoSelecionado }) 
+});
         const data = await res.json();
         if (res.ok) {
             showAlert('Sucesso!', `Manutenção do pedido ${idPedido} iniciada pelo técnico ${tecnicoSelecionado}.`, 'success');
