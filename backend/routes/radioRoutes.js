@@ -1,4 +1,3 @@
-// backend/routes/radioRoutes.js
 const express = require('express');
 const router = express.Router();
 const radioController = require('../controllers/radioController');
@@ -9,5 +8,8 @@ router.get('/', autenticarToken, radioController.getAllRadios);
 router.get('/serial/:numeroSerie', autenticarToken, radioController.getRadioByNumeroSerie);
 router.put('/serial/:numeroSerie/patrimonio', autenticarToken, autorizarAdmin, radioController.updatePatrimonio);
 router.delete('/serial/:numeroSerie', autenticarToken, autorizarAdmin, radioController.deleteRadio);
+
+// Rota para o painel de admin buscar a lista de rádios com detalhes do usuário
+router.get('/cadastrados', autenticarToken, autorizarAdmin, radioController.getRadiosCadastrados);
 
 module.exports = router;

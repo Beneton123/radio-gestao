@@ -1,5 +1,8 @@
 // frontend/js/registrar.js
 
+// ADICIONADO: Constante para a URL base da API
+const API_BASE_URL = 'http://10.110.120.237:5000/api';
+
 let modalAdicionarModeloInstance = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,7 +69,8 @@ async function carregarModelos() {
 
     try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/modelos', {
+        // ATUALIZADO: Usando a URL completa da API
+        const res = await fetch(`${API_BASE_URL}/modelos`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -107,7 +111,8 @@ async function handleSalvarNovoModelo() {
 
     try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/modelos', {
+        // ATUALIZADO: Usando a URL completa da API
+        const res = await fetch(`${API_BASE_URL}/modelos`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -120,9 +125,9 @@ async function handleSalvarNovoModelo() {
 
         if (res.ok) {
             modalAdicionarModeloInstance.hide(); // Fecha o modal
-            showAlert('Sucesso!', data.message, 'success');
+            showAlert('Sucesso!', 'Modelo cadastrado com sucesso!', 'success');
             await carregarModelos(); // Recarrega a lista para incluir o novo modelo
-            document.getElementById('modelo').value = data.modelo.nome; // Já seleciona o modelo que acabou de ser criado
+            document.getElementById('modelo').value = data.nome; // Já seleciona o modelo que acabou de ser criado
             nomeModeloInput.value = ''; // Limpa o campo do modal
         } else {
             showAlert('Erro ao Salvar', data.message || 'Não foi possível salvar o novo modelo.', 'danger');
@@ -159,7 +164,8 @@ async function handleCadastroSubmit(e) {
     btnSubmit.textContent = 'Salvando...';
 
     try {
-        const res = await fetch('/radios', {
+        // ATUALIZADO: Usando a URL completa da API
+        const res = await fetch(`${API_BASE_URL}/radios`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

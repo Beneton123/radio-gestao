@@ -1,7 +1,7 @@
 // backend/controllers/radioController.js
 const Radio = require('../models/Radio');
-const RadioExcluido = require('../models/RadioExcluido'); // Garanta que esta linha existe e o modelo está definido!
-const Modelo = require('../models/Modelo'); 
+const RadioExcluido = require('../models/RadioExcluido');
+const Modelo = require('../models/Modelo');
 
 exports.createRadio = async (req, res) => {
     try {
@@ -18,7 +18,13 @@ exports.createRadio = async (req, res) => {
         if (radioExistente) {
             return res.status(409).json({ message: 'Já existe um rádio com este número de série.' });
         }
-        const novoRadio = new Radio({ modelo: modeloExistente.nome, numeroSerie, patrimonio, frequencia });
+        const novoRadio = new Radio({
+            modelo: modeloExistente.nome,
+            numeroSerie,
+            patrimonio,
+            frequencia,
+            cadastradoPor: req.usuario.id // Salva o ID do usuário logado
+        });
         await novoRadio.save();
         res.status(201).json({ message: 'Rádio cadastrado com sucesso!', radio: novoRadio });
     } catch (error) {
@@ -60,7 +66,7 @@ exports.getRadioByNumeroSerie = async (req, res) => {
 exports.deleteRadio = async (req, res) => {
     try {
         const { numeroSerie } = req.params;
-        const { motivo } = req.body; 
+        const { motivo } = req.body;
         const radio = await Radio.findOne({ numeroSerie });
 
         if (!radio) return res.status(404).json({ message: 'Rádio não encontrado.' });
@@ -71,7 +77,7 @@ exports.deleteRadio = async (req, res) => {
         const radioDeletado = new RadioExcluido({
             ...radio.toObject(),
             deletadoPor: req.usuario.email,
-            motivoExclusao: motivo || 'Não especificado' 
+            motivoExclusao: motivo || 'Não especificado'
         });
         await radioDeletado.save();
         await Radio.deleteOne({ numeroSerie });
@@ -83,16 +89,9 @@ exports.deleteRadio = async (req, res) => {
     }
 };
 
-// FUNÇÃO CORRIGIDA: Obtém rádios excluídos do modelo RadioExcluido
 exports.getDeletedRadios = async (req, res) => {
     try {
-        // A rota já usa temPermissao('admin'), então a verificação manual aqui é opcional.
-        // if (!req.usuario || !req.usuario.permissoes.includes('admin')) {
-        //     return res.status(403).json({ message: 'Acesso negado. Requer permissão de administrador.' });
-        // }
-
-        // ***** CORREÇÃO FINAL: BUSCANDO DO MODELO RadioExcluido *****
-        const deletedRadios = await RadioExcluido.find().sort({ deletadoEm: -1 }); 
+        const deletedRadios = await RadioExcluido.find().sort({ deletadoEm: -1 });
         res.json(deletedRadios);
     } catch (error) {
         console.error('Erro ao buscar rádios excluídos:', error);
@@ -117,5 +116,18 @@ exports.updatePatrimonio = async (req, res) => {
     } catch (error) {
         console.error("Erro em updatePatrimonio:", error);
         res.status(500).json({ message: 'Erro interno ao atualizar patrimônio.', error: error.message });
+    }
+};
+
+exports.getRadiosCadastrados = async (req, res) => {
+    try {
+        const radios = await Radio.find()
+            .populate('cadastradoPor', 'email') // CORRIGIDO: Busca o 'email' do usuário.
+            .sort({ createdAt: -1 }); // Ordena pelos mais recentes
+
+        res.json(radios);
+    } catch (error) {
+        console.error("Erro em getRadiosCadastrados:", error);
+        res.status(500).json({ message: 'Erro interno ao listar rádios cadastrados.', error: error.message });
     }
 };
