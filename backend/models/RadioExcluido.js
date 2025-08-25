@@ -13,7 +13,8 @@ const radioExcluidoSchema = new mongoose.Schema({
     tipoLocacaoAtual: { type: String },
     ultimaNfSaida: { type: String },
     deletadoPor: { type: String, required: true }, // Email do admin que deletou
-    deletadoEm: { type: Date, default: Date.now } // Data da exclusão
+    deletadoEm: { type: Date, default: Date.now }, // Data da exclusão
+    motivoExclusao: { type: String, default: 'Não especificado' } // <-- CAMPO NOVO IMPLEMENTADO
 }, {
     timestamps: true // Adiciona createdAt e updatedAt originais do rádio
 });

@@ -16,19 +16,33 @@ function showAlert(title, message, type = 'info') { // 'info' como padrão, pode
         return;
     }
 
-    const modalHeader = modalElement.querySelector('#customAlertModalHeader');
-    const modalTitle = modalElement.querySelector('#customAlertModalLabel');
-    const modalMessage = modalElement.querySelector('#customAlertMessage');
+    // AQUI OCORREU UM PEQUENO PROBLEMA DE ESTRUTURA NO SEU HTML/MODAL
+    // O modal que configurei anteriormente para o admin.html tem apenas `modal-header`, `modal-body` e `modal-footer`.
+    // Não há um #customAlertModalHeader separado.
+    // O ideal é que o 'bg-success', 'bg-warning' etc., sejam aplicados no .modal-header diretamente.
+    // E a mensagem principal no .modal-body, não num #customAlertMessage.
+
+    const modalHeader = modalElement.querySelector('.modal-header'); // Seleciona o modal-header padrão
+    const modalTitle = modalElement.querySelector('#customAlertModalLabel'); // Onde vai o título
+    const modalBody = modalElement.querySelector('.modal-body'); // Onde vai a mensagem principal
     const modalButton = modalElement.querySelector('.modal-footer .btn-secondary'); // Botão 'OK'
 
+    if (!modalHeader || !modalTitle || !modalBody || !modalButton) {
+        console.error("Elementos internos do modal de alerta não encontrados. Verifique a estrutura do #customAlertModal no seu HTML.");
+        alert(`${title}: ${message}`);
+        return;
+    }
+
     // Remove classes de tipo anteriores de todos os cabeçalhos de modal, se existirem
-    modalHeader.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'bg-info', 'bg-primary');
+    // Itere sobre as classes existentes do Bootstrap para remover
+    const bootstrapBgClasses = ['bg-success', 'bg-warning', 'bg-danger', 'bg-info', 'bg-primary', 'bg-secondary'];
+    modalHeader.classList.remove(...bootstrapBgClasses);
 
     // Adiciona a classe de tipo apropriada e define o texto do botão 'OK'
     switch (type) {
         case 'success':
             modalHeader.classList.add('bg-success');
-            modalButton.textContent = 'Fechar'; // Ou 'OK'
+            modalButton.textContent = 'Fechar';
             break;
         case 'warning':
             modalHeader.classList.add('bg-warning');
@@ -53,7 +67,8 @@ function showAlert(title, message, type = 'info') { // 'info' como padrão, pode
     }
 
     modalTitle.textContent = title;
-    modalMessage.textContent = message;
+    // Aqui, a mensagem vai diretamente no corpo do modal
+    modalBody.innerHTML = `<div class="alert alert-${type} m-0" role="alert">${message}</div>`;
 
     const customAlertModal = new bootstrap.Modal(modalElement);
     customAlertModal.show();
@@ -75,3 +90,23 @@ function showConfirmation(title, message, onConfirm) {
         }
     }
 }
+
+/**
+ * Configura o comportamento de logout para o link de saída.
+ */
+function setupLogout() {
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            // Redireciona para a página de login
+            window.location.href = 'login.html'; 
+        });
+    } else {
+        console.warn("Elemento com ID 'logout-link' não encontrado para configurar o logout.");
+    }
+}
+
+// Opcional: Se quiser que setupLogout seja chamado automaticamente ao carregar ui.js
+// document.addEventListener('DOMContentLoaded', setupLogout);
