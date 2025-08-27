@@ -64,33 +64,42 @@ async function inicializarPaginaDeRegistro() {
  * Busca a lista de modelos da API e popula o <datalist>.
  */
 async function carregarModelos() {
-    const datalist = document.getElementById('datalistModelos');
-    if (!datalist) return;
+    const modeloSelect = document.getElementById('modelo');
+    if (!modeloSelect) return;
 
-    try {
-        const token = localStorage.getItem('token');
-        // ATUALIZADO: Usando a URL completa da API
-        const res = await fetch(`${API_BASE_URL}/modelos`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+    // Limpa as opções e adiciona uma mensagem de "carregando"
+    modeloSelect.innerHTML = '<option value="" disabled selected>Carregando...</option>';
 
-        if (!res.ok) {
-            throw new Error('Falha ao carregar modelos de rádio.');
-        }
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE_URL}/modelos`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-        const modelos = await res.json();
-        datalist.innerHTML = ''; // Limpa opções antigas antes de adicionar as novas
-        modelos.forEach(modelo => {
-            const option = document.createElement('option');
-            option.value = modelo.nome;
-            datalist.appendChild(option);
-        });
+        if (!res.ok) {
+            throw new Error('Falha ao carregar modelos de rádio.');
+        }
 
-    } catch (error) {
-        console.error('Erro de rede ao carregar modelos:', error);
-        datalist.innerHTML = '<option value="Falha ao carregar modelos"></option>';
-    }
+        const modelos = await res.json();
+        
+        // Limpa novamente para colocar a opção padrão
+        modeloSelect.innerHTML = '<option value="" disabled selected>Selecione um modelo</option>';
+
+        modelos.forEach(modelo => {
+            const option = document.createElement('option');
+            // A sua lógica original estava esperando um objeto { nome: '...' }.
+            // Se a API retornar um array de strings, use: option.value = modelo; option.textContent = modelo;
+            option.value = modelo.nome;
+            option.textContent = modelo.nome;
+            modeloSelect.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('Erro de rede ao carregar modelos:', error);
+        modeloSelect.innerHTML = '<option value="" disabled selected>Falha ao carregar</option>';
+    }
 }
+
 
 /**
  * Lida com o clique no botão "Salvar Modelo" dentro do modal.

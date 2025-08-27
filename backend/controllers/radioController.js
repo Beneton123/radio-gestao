@@ -1,6 +1,4 @@
-// backend/controllers/radioController.js
 const Radio = require('../models/Radio');
-const RadioExcluido = require('../models/RadioExcluido');
 const Modelo = require('../models/Modelo');
 
 exports.createRadio = async (req, res) => {
@@ -14,16 +12,19 @@ exports.createRadio = async (req, res) => {
         if (!modeloExistente) {
             return res.status(400).json({ message: `O modelo "${modelo}" não é válido. Cadastre o modelo primeiro.` });
         }
+        
+        // Procura por um rádio existente, mesmo que inativo, para evitar duplicatas
         const radioExistente = await Radio.findOne({ numeroSerie });
         if (radioExistente) {
             return res.status(409).json({ message: 'Já existe um rádio com este número de série.' });
         }
+
         const novoRadio = new Radio({
             modelo: modeloExistente.nome,
             numeroSerie,
             patrimonio,
             frequencia,
-            cadastradoPor: req.usuario.id // Salva o ID do usuário logado
+            cadastradoPor: req.usuario.id
         });
         await novoRadio.save();
         res.status(201).json({ message: 'Rádio cadastrado com sucesso!', radio: novoRadio });
@@ -33,15 +34,17 @@ exports.createRadio = async (req, res) => {
     }
 };
 
+// **PARA ESTOQUE E LISTAS GERAIS:** Busca apenas rádios ATIVOS.
 exports.getAllRadios = async (req, res) => {
     try {
         const { status, nfAtual, search } = req.query;
-        let query = {};
+        let query = { ativo: true }; // FILTRO PRINCIPAL
+
         if (status) query.status = status;
         if (nfAtual) query.nfAtual = nfAtual;
         if (search) {
             const searchRegex = new RegExp(search, 'i');
-            query.$or = [{ modelo: searchRegex }, { numeroSerie: searchRegex }, { patrimonio: searchRegex }, { frequencia: searchRegex }];
+            query.$or = [{ modelo: searchRegex }, { numeroSerie: searchRegex }, { patrimonio: searchRegex }];
         }
         const radios = await Radio.find(query);
         res.json(radios);
@@ -51,11 +54,15 @@ exports.getAllRadios = async (req, res) => {
     }
 };
 
+// **PARA A PÁGINA DE HISTÓRICO:** Busca um rádio pelo serial, IGNORANDO se está ativo ou não.
 exports.getRadioByNumeroSerie = async (req, res) => {
     try {
         const { numeroSerie } = req.params;
-        const radio = await Radio.findOne({ numeroSerie });
-        if (!radio) return res.status(404).json({ message: 'Rádio não encontrado.' });
+        // Propositalmente NÃO filtramos por "ativo: true" aqui.
+        const radio = await Radio.findOne({ numeroSerie }).populate('cadastradoPor', 'email');
+        if (!radio) {
+            return res.status(404).json({ message: 'Rádio não encontrado.' });
+        }
         res.json(radio);
     } catch (error) {
         console.error("Erro em getRadioByNumeroSerie:", error);
@@ -63,39 +70,30 @@ exports.getRadioByNumeroSerie = async (req, res) => {
     }
 };
 
+// **FUNÇÃO DE EXCLUSÃO CORRIGIDA:** Apenas desativa o rádio.
 exports.deleteRadio = async (req, res) => {
     try {
         const { numeroSerie } = req.params;
-        const { motivo } = req.body;
         const radio = await Radio.findOne({ numeroSerie });
 
-        if (!radio) return res.status(404).json({ message: 'Rádio não encontrado.' });
+        if (!radio) {
+            return res.status(404).json({ message: 'Rádio não encontrado.' });
+        }
+        if (radio.ativo === false) {
+            return res.status(400).json({ message: 'Este rádio já foi excluído.' });
+        }
         if (radio.status !== 'Disponível') {
             return res.status(400).json({ message: `Não é possível excluir. Status atual: "${radio.status}".` });
         }
 
-        const radioDeletado = new RadioExcluido({
-            ...radio.toObject(),
-            deletadoPor: req.usuario.email,
-            motivoExclusao: motivo || 'Não especificado'
-        });
-        await radioDeletado.save();
-        await Radio.deleteOne({ numeroSerie });
+        // Ação: Mudar o status para inativo e salvar.
+        radio.ativo = false;
+        await radio.save();
 
-        res.status(200).json({ message: 'Rádio excluído e movido para o histórico.' });
+        res.status(200).json({ message: 'Rádio excluído com sucesso.' });
     } catch (error) {
         console.error('ERRO DETALHADO AO EXCLUIR:', error);
         res.status(500).json({ message: 'Erro interno ao excluir rádio.', error: error.message });
-    }
-};
-
-exports.getDeletedRadios = async (req, res) => {
-    try {
-        const deletedRadios = await RadioExcluido.find().sort({ deletadoEm: -1 });
-        res.json(deletedRadios);
-    } catch (error) {
-        console.error('Erro ao buscar rádios excluídos:', error);
-        res.status(500).json({ message: 'Erro interno do servidor ao buscar rádios excluídos.', error: error.message });
     }
 };
 
@@ -119,11 +117,12 @@ exports.updatePatrimonio = async (req, res) => {
     }
 };
 
+// **PARA A ABA "RÁDIOS CADASTRADOS":** Busca apenas rádios ATIVOS.
 exports.getRadiosCadastrados = async (req, res) => {
     try {
-        const radios = await Radio.find()
-            .populate('cadastradoPor', 'email') // CORRIGIDO: Busca o 'email' do usuário.
-            .sort({ createdAt: -1 }); // Ordena pelos mais recentes
+        const radios = await Radio.find({ ativo: true }) // FILTRO PRINCIPAL
+            .populate('cadastradoPor', 'email')
+            .sort({ createdAt: -1 });
 
         res.json(radios);
     } catch (error) {

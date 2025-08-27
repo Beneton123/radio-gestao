@@ -13,3 +13,4 @@ router.delete('/serial/:numeroSerie', autenticarToken, autorizarAdmin, radioCont
 router.get('/cadastrados', autenticarToken, autorizarAdmin, radioController.getRadiosCadastrados);
 
 module.exports = router;
+ 
