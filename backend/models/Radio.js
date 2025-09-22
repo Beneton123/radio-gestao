@@ -11,8 +11,12 @@ const radioSchema = new mongoose.Schema({
     nfAtual: { type: String, default: null },
     tipoLocacaoAtual: { type: String, enum: ['Mensal', 'Anual', null], default: null },
     cadastradoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
-    // Este campo é a chave para a exclusão lógica.
     ativo: { type: Boolean, default: true }
 }, { timestamps: true });
+
+radioSchema.index(
+    { numeroSerie: 1 },
+    { unique: true, partialFilterExpression: { ativo: true } }
+);
 
 module.exports = mongoose.model('Radio', radioSchema);

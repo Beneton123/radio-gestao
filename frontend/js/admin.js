@@ -2,7 +2,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // A URL base da sua API.
     const API_BASE_URL = 'http://10.110.120.237:5000/api';
 
-    // Formata a data para o padrão DD/MM/AAAA HH:mm.
+    // --- FUNÇÕES UTILITÁRIAS ---
+
     function formatarDataHora(dataString) {
         if (!dataString) return 'N/A';
         const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
@@ -14,19 +15,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
         return new Date(dataString).toLocaleDateString('pt-BR', options);
     }
-    
-    // --- Carregamento e Preenchimento das Tabelas de Histórico ---
 
-    /**
-     * Carrega e exibe o Histórico de Rádios Cadastrados.
-     */
+    // FUNÇÃO DE FILTRO CORRIGIDA E CENTRALIZADA
+    function aplicarFiltro(inputId, tableId) {
+        const input = document.getElementById(inputId);
+        const table = document.getElementById(tableId)?.getElementsByTagName('tbody')[0]; // Pega o corpo da tabela
+        if (!input || !table) return;
+
+        const handleFilter = () => {
+            const filter = input.value.toUpperCase();
+            const rows = table.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let found = false;
+                if (cells.length > 0) { // Garante que não é uma linha de "carregando" ou "vazio"
+                    for (let j = 0; j < cells.length; j++) {
+                        if (cells[j]) {
+                            if (cells[j].textContent.toUpperCase().indexOf(filter) > -1) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    rows[i].style.display = found ? '' : 'none';
+                }
+            }
+        };
+        input.addEventListener('keyup', handleFilter);
+    }
+    
+    // --- CARREGAMENTO DE DADOS DAS ABAS ---
+
     async function carregarRadiosCadastrados() {
-        const tabelaRadios = document.getElementById('tabelaRadiosCadastrados');
-        if (!tabelaRadios) {
-            console.error("Elemento 'tabelaRadiosCadastrados' não encontrado.");
-            return;
-        }
-        tabelaRadios.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
+        const tabela = document.getElementById('tabelaRadiosCadastrados');
+        if (!tabela) return;
+        tabela.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
 
         try {
             const token = localStorage.getItem('token');
@@ -34,22 +58,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: response.statusText }));
-                throw new Error(errorData.message || 'Erro ao carregar rádios cadastrados.');
-            }
+            if (!response.ok) throw new Error('Falha ao carregar o histórico de rádios.');
 
             const radios = await response.json();
-            tabelaRadios.innerHTML = '';
+            tabela.innerHTML = '';
 
             if (radios.length === 0) {
-                tabelaRadios.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum rádio cadastrado encontrado.</td></tr>';
+                tabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum rádio cadastrado.</td></tr>';
                 return;
             }
 
+            // A lista já vem ordenada do backend
             radios.forEach(radio => {
-                
-                const cadastradoPor = radio.cadastradoPor ? radio.cadastradoPor.email : 'Usuário desconhecido';
+                const cadastradoPor = radio.cadastradoPor ? radio.cadastradoPor.email : 'N/A';
                 const row = `
                     <tr>
                         <td>${radio.modelo}</td>
@@ -59,113 +80,104 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <td>${cadastradoPor}</td>
                     </tr>
                 `;
-                tabelaRadios.innerHTML += row;
+                tabela.innerHTML += row;
             });
 
         } catch (error) {
-            console.error('Erro ao carregar rádios cadastrados:', error);
-            showAlert('Erro de Carregamento', `Erro ao carregar rádios cadastrados: ${error.message}`, 'danger');
-            if (tabelaRadios) {
-                tabelaRadios.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Falha ao carregar dados.</td></tr>';
-            }
+            console.error('Erro:', error);
+            tabela.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
         }
     }
 
-    async function carregarHistoricoSaidas() {
-        // ... (seu código original para carregar saídas, que já está correto)
-    }
-
-    async function carregarHistoricoEntradas() {
-        // ... (seu código original para carregar entradas, que já está correto)
-    }
-
-    async function carregarHistoricoManutencao() {
-        // ... (seu código original para carregar manutenção, que já está correto)
-    }
-
     async function carregarHistoricoExcluidos() {
-        // ... (seu código original para carregar excluídos, que já está correto)
+        const tabela = document.getElementById('tabelaExcluidos');
+        if (!tabela) return;
+        tabela.innerHTML = '<tr><td colspan="6" class="text-center">Carregando...</td></tr>';
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/radios/excluidos`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Falha ao carregar rádios excluídos.');
+
+            const radios = await response.json();
+            tabela.innerHTML = '';
+
+            if (radios.length === 0) {
+                tabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum rádio excluído encontrado.</td></tr>';
+                return;
+            }
+
+            radios.forEach(radio => {
+                const cadastradoPor = radio.cadastradoPor ? radio.cadastradoPor.email : 'N/A';
+                const row = `
+                    <tr>
+                        <td>${radio.numeroSerie}</td>
+                        <td>${radio.modelo}</td>
+                        <td>${radio.patrimonio || 'N/A'}</td>
+                        <td>${cadastradoPor}</td>
+                        <td>${formatarDataHora(radio.updatedAt)}</td>
+                        <td>N/A</td>
+                    </tr>
+                `;
+                tabela.innerHTML += row;
+            });
+        } catch (error) {
+            console.error('Erro:', error);
+            tabela.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`;
+        }
     }
 
-    // --- Lógica para mostrar detalhes (sem alteração) ---
-    async function mostrarDetalhesNf(nfNumero) {
-        // ... (seu código original)
-    }
+    // --- Coloque aqui suas outras funções que já existem (se houver) ---
+    async function carregarHistoricoSaidas() { /* ... Seu código ... */ }
+    async function carregarHistoricoEntradas() { /* ... Seu código ... */ }
+    async function carregarHistoricoManutencao() { /* ... Seu código ... */ }
+    async function loadUsers() { /* ... Seu código ... */ }
 
-    async function mostrarDetalhesManutencao(idPedido) {
-        // ... (seu código original)
-    }
+    // --- INICIALIZAÇÃO E EVENTOS ---
 
-    // --- Lógica de Filtro (sem alteração) ---
-    function aplicarFiltro(inputId, tableId) {
-        // ... (seu código original)
-    }
-
-    // --- Funções de Gerenciamento de Usuários (sem alteração) ---
-    async function loadUsers() {
-        // ... (seu código original)
-    }
-    
-    function renderUsers(users) {
-        // ... (seu código original)
-    }
-
-    async function addUser(userData) {
-        // ... (seu código original)
-    }
-
-    async function updateUser(id, userData) {
-        // ... (seu código original)
-    }
-
-    async function deleteUser(id) {
-        // ... (seu código original)
-    }
-
-    // --- Inicialização e Eventos das Abas ---
     const adminTabs = document.getElementById('adminTabs');
     if (adminTabs) {
         const handleTabChange = async (tabId) => {
-            const customAlertModalElement = document.getElementById('customAlertModal');
-            if (customAlertModalElement) {
-                const modalBody = customAlertModalElement.querySelector('.modal-body');
-                if (modalBody) modalBody.innerHTML = '';
-                const modalTitleElement = customAlertModalElement.querySelector('#customAlertModalLabel');
-                if (modalTitleElement) modalTitleElement.textContent = 'Detalhes';
-            }
-
             switch (tabId) {
                 case 'cadastrados-tab':
                     await carregarRadiosCadastrados();
-                    aplicarFiltro('filtroRadiosCadastrados', 'tabelaRadiosCadastrados');
                     break;
                 case 'saidas-tab':
-                    await carregarHistoricoSaidas();
-                    aplicarFiltro('filtroSaidas', 'tabelaSaidas');
+                    // await carregarHistoricoSaidas(); // Implemente esta função se necessário
                     break;
                 case 'entradas-tab':
-                    await carregarHistoricoEntradas();
-                    aplicarFiltro('filtroEntradas', 'tabelaEntradas');
+                    // await carregarHistoricoEntradas(); // Implemente esta função se necessário
                     break;
                 case 'manutencao-tab':
-                    await carregarHistoricoManutencao();
-                    aplicarFiltro('filtroManutencao', 'tabelaManutencao');
+                    // await carregarHistoricoManutencao(); // Implemente esta função se necessário
                     break;
                 case 'excluidos-tab':
                     await carregarHistoricoExcluidos();
-                    aplicarFiltro('filtroExcluidos', 'tabelaExcluidos');
                     break;
                 case 'usuarios-tab':
-                    await loadUsers();
-                    aplicarFiltro('filtroUsuarios', 'tabelaUsuarios');
+                    // await loadUsers(); // Implemente esta função se necessário
                     break;
             }
         };
         
-        adminTabs.addEventListener('shown.bs.tab', (event) => {
-            handleTabChange(event.target.id);
+        document.querySelectorAll('#adminTabs .nav-link').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', (event) => {
+                handleTabChange(event.target.id);
+            });
         });
 
+        // Aplica os filtros para todas as abas
+        aplicarFiltro('filtroRadiosCadastrados', 'tabelaRadiosCadastrados');
+        aplicarFiltro('filtroSaidas', 'tabelaSaidas');
+        aplicarFiltro('filtroEntradas', 'tabelaEntradas');
+        aplicarFiltro('filtroManutencao', 'tabelaManutencao');
+        aplicarFiltro('filtroExcluidos', 'tabelaExcluidos');
+        aplicarFiltro('filtroUsuarios', 'tabelaUsuarios');
+
+        // Carrega o conteúdo da aba que já está ativa ao carregar a página
         const activeTabButton = document.querySelector('#adminTabs .nav-link.active');
         if (activeTabButton) {
             handleTabChange(activeTabButton.id);
