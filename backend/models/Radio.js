@@ -5,18 +5,22 @@ const radioSchema = new mongoose.Schema({
     numeroSerie: { type: String, required: true, uppercase: true },
     patrimonio: { type: String, default: '' },
     frequencia: { type: String, required: true },
-    status: { type: String, default: 'Disponível', enum: ['Disponível', 'Ocupado', 'Manutenção'] },
+    status: { 
+        type: String, 
+        default: 'Disponível', 
+        enum: ['Disponível', 'Ocupado', 'Manutenção'] 
+    }, // Enum para status
     ultimaNfSaida: { type: String, default: null },
     ultimaNfEntrada: { type: String, default: null },
     nfAtual: { type: String, default: null },
     tipoLocacaoAtual: { type: String, enum: ['Mensal', 'Anual', null], default: null },
     cadastradoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
-    ativo: { type: Boolean, default: true }
+    ativo: { type: Boolean, default: true } // Garantindo que este campo esteja corretamente configurado
 }, { timestamps: true });
 
 radioSchema.index(
     { numeroSerie: 1 },
-    { unique: true, partialFilterExpression: { ativo: true } }
+    { unique: true, partialFilterExpression: { ativo: true } } // Garante que apenas rádios ativos podem ser duplicados
 );
 
 module.exports = mongoose.model('Radio', radioSchema);

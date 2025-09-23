@@ -1,9 +1,5 @@
-// backend/controllers/manutencaoController.js
 const PedidoManutencao = require('../models/PedidoManutencao');
 const Radio = require('../models/Radio');
-// Se você tem um modelo Manutencao separado para histórico, mantenha-o aqui,
-// caso contrário, o histórico será baseado em PedidoManutencao.
-// const Manutencao = require('../models/Manutencao'); 
 const { getNextSequenceValue } = require('../utils/helpers');
 
 // Cria uma nova solicitação de manutenção
@@ -16,12 +12,37 @@ exports.createSolicitacao = async (req, res) => {
 
         const radiosDetalhes = [];
         for (const r of radios) {
-            const radioNoEstoque = await Radio.findOne({ numeroSerie: r.numeroSerie });
-            if (!radioNoEstoque) return res.status(404).json({ message: `Rádio ${r.numeroSerie} não encontrado.` });
-            if (radioNoEstoque.status !== 'Disponível') return res.status(400).json({ message: `Rádio ${r.numeroSerie} não está disponível (status: ${radioNoEstoque.status}).` });
-            radiosDetalhes.push({ ...r, modelo: radioNoEstoque.modelo, patrimonio: radioNoEstoque.patrimonio });
+            console.log(`Buscando rádio com número de série: ${r.numeroSerie}`);
+            // Verificando se o rádio está ativo e com o status "Disponível" ou "Ocupado"
+            const radioNoEstoque = await Radio.findOne({ 
+                numeroSerie: r.numeroSerie, 
+                ativo: true // Garantindo que estamos buscando apenas rádios ativos
+            });
+
+            // Verificando se o rádio foi encontrado
+            console.log(`Resultado da busca para o rádio ${r.numeroSerie}: `, radioNoEstoque);
+
+            if (!radioNoEstoque) {
+                // Se o rádio não foi encontrado ou está excluído (ativo: false)
+                console.log(`Rádio ${r.numeroSerie} não encontrado ou foi excluído.`);
+                return res.status(404).json({ message: `Rádio ${r.numeroSerie} não encontrado ou foi excluído.` });
+            }
+
+            // Verifica se o status do rádio é "Disponível" ou "Ocupado"
+            console.log(`Status do rádio ${r.numeroSerie}: ${radioNoEstoque.status}`);
+            if (radioNoEstoque.status !== 'Disponível' && radioNoEstoque.status !== 'Ocupado') {
+                return res.status(400).json({ message: `Rádio ${r.numeroSerie} não está disponível (status: ${radioNoEstoque.status}).` });
+            }
+
+            // Se o rádio for válido, adiciona ele à lista
+            radiosDetalhes.push({ 
+                ...r, 
+                modelo: radioNoEstoque.modelo, 
+                patrimonio: radioNoEstoque.patrimonio 
+            });
         }
-        
+
+        // Gera um novo ID para o pedido
         const idPedido = await getNextSequenceValue('pedidoId');
         const novoPedido = new PedidoManutencao({
             idPedido, prioridade, radios: radiosDetalhes,
@@ -32,18 +53,16 @@ exports.createSolicitacao = async (req, res) => {
         await novoPedido.save();
         res.status(201).json({ message: 'Solicitação de manutenção criada com sucesso!', pedido: novoPedido });
     } catch (error) {
-        console.error("Erro em createSolicitacao:", error); // Adicionado console.error
+        console.error("Erro em createSolicitacao:", error);
         res.status(500).json({ message: 'Erro interno ao criar solicitação.', error: error.message });
     }
 };
 
 // Obtém o histórico de manutenções finalizadas
-// Esta função buscará os pedidos de manutenção que foram concluídos/finalizados.
 exports.getManutencaoHistory = async (req, res) => {
     try {
-        // Assume que o histórico de manutenção são os PedidoManutencao com status 'finalizado'
         const manutencoesHistorico = await PedidoManutencao.find({ statusPedido: 'finalizado' })
-                                                        .sort({ dataFimManutencao: -1, dataSolicitacao: -1 }); // Ordena pela data de fim
+                                                        .sort({ dataFimManutencao: -1, dataSolicitacao: -1 });
         res.json(manutencoesHistorico);
     } catch (error) {
         console.error('Erro ao buscar histórico de manutenções:', error);
@@ -55,18 +74,16 @@ exports.getManutencaoHistory = async (req, res) => {
 exports.getAllSolicitacoes = async (req, res) => {
     try {
         let query = {};
-        // Se o usuário não tem permissão de gerenciar_manutencao ou admin, filtra pelas suas próprias solicitações
         if (!req.usuario.permissoes.includes('gerenciar_manutencao') && !req.usuario.permissoes.includes('admin')) {
             query.solicitanteEmail = req.usuario.email;
         }
-        // Permite filtrar por múltiplos status, se passados como query param (ex: ?status=aberto,em_manutencao)
         if (req.query.status) {
             query.statusPedido = { $in: req.query.status.split(',') };
         }
         const solicitacoes = await PedidoManutencao.find(query).sort({ dataSolicitacao: -1 });
         res.json(solicitacoes);
     } catch (error) {
-        console.error("Erro em getAllSolicitacoes:", error); // Adicionado console.error
+        console.error("Erro em getAllSolicitacoes:", error);
         res.status(500).json({ message: 'Erro interno ao listar solicitações.', error: error.message });
     }
 };
@@ -77,13 +94,12 @@ exports.getSolicitacaoById = async (req, res) => {
         const { idPedido } = req.params;
         const pedido = await PedidoManutencao.findOne({ idPedido });
         if (!pedido) return res.status(404).json({ message: 'Pedido não encontrado.' });
-        // Validação de permissão: apenas quem solicitou, ou quem gerencia/admin pode ver
         if (!req.usuario.permissoes.includes('gerenciar_manutencao') && !req.usuario.permissoes.includes('admin') && pedido.solicitanteEmail !== req.usuario.email) {
             return res.status(403).json({ message: 'Acesso negado.' });
         }
         res.json(pedido);
     } catch (error) {
-        console.error("Erro em getSolicitacaoById:", error); // Adicionado console.error
+        console.error("Erro em getSolicitacaoById:", error);
         res.status(500).json({ message: 'Erro interno ao buscar pedido.', error: error.message });
     }
 };
@@ -104,7 +120,7 @@ exports.darAndamento = async (req, res) => {
 
         res.status(200).json({ message: 'Status do pedido atualizado para "Aguardando Manutenção".', pedido });
     } catch (error) {
-        console.error("Erro em darAndamento:", error); // Adicionado console.error
+        console.error("Erro em darAndamento:", error);
         res.status(500).json({ message: 'Erro interno do servidor.', error: error.message });
     }
 };
@@ -124,7 +140,7 @@ exports.iniciarManutencao = async (req, res) => {
         if (!pedido) return res.status(404).json({ message: 'Pedido não encontrado ou não está em status "aguardando_manutencao".' });
         res.status(200).json({ message: 'Manutenção iniciada.', pedido });
     } catch (error) {
-        console.error("Erro em iniciarManutencao:", error); // Adicionado console.error
+        console.error("Erro em iniciarManutencao:", error);
         res.status(500).json({ message: 'Erro interno do servidor.', error: error.message });
     }
 };
@@ -140,7 +156,7 @@ exports.concluirManutencao = async (req, res) => {
         
         pedido.statusPedido = 'finalizado';
         pedido.dataFimManutencao = new Date();
-        pedido.observacoesTecnicas = observacoesTecnicas || pedido.observacoesTecnicas || 'Nenhuma observação técnica fornecida.'; // Mantém as antigas ou adiciona novas
+        pedido.observacoesTecnicas = observacoesTecnicas || pedido.observacoesTecnicas || 'Nenhuma observação técnica fornecida.';
         await pedido.save();
         
         const numerosSerie = pedido.radios.map(r => r.numeroSerie);
@@ -148,7 +164,7 @@ exports.concluirManutencao = async (req, res) => {
         
         res.status(200).json({ message: 'Manutenção concluída e rádios disponíveis.', pedido });
     } catch (error) {
-        console.error("Erro em concluirManutencao:", error); // Adicionado console.error
+        console.error("Erro em concluirManutencao:", error);
         res.status(500).json({ message: 'Erro interno do servidor.', error: error.message });
     }
 };
@@ -157,19 +173,17 @@ exports.concluirManutencao = async (req, res) => {
 exports.getEstoqueManutencao = async (req, res) => {
     try {
         const radiosEmManutencao = await Radio.find({ status: 'Manutenção' }).lean();
-        // Detalha os rádios com os pedidos de manutenção abertos/em andamento
         const estoqueDetalhado = await Promise.all(radiosEmManutencao.map(async (radio) => {
             const pedido = await PedidoManutencao.findOne({
                 'radios.numeroSerie': radio.numeroSerie,
                 statusPedido: { $in: ['aberto', 'aguardando_manutencao', 'em_manutencao'] }
-            }).sort({ dataSolicitacao: -1 }).lean(); // Pega o pedido mais recente para esse rádio
-            // Adiciona a descrição do problema do rádio específica para esse pedido
+            }).sort({ dataSolicitacao: -1 }).lean();
             const problema = pedido ? pedido.radios.find(r => r.numeroSerie === radio.numeroSerie)?.descricaoProblema : 'N/A';
             return { ...radio, pedidoManutencao: pedido, descricaoProblema: problema };
         }));
         res.json(estoqueDetalhado);
     } catch (error) {
-        console.error("Erro em getEstoqueManutencao:", error); // Adicionado console.error
+        console.error("Erro em getEstoqueManutencao:", error);
         res.status(500).json({ message: 'Erro interno do servidor.', error: error.message });
     }
 };

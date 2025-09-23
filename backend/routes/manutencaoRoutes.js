@@ -1,11 +1,10 @@
-// backend/routes/manutencaoRoutes.js
 const express = require('express');
 const router = express.Router();
 const manutencaoController = require('../controllers/manutencaoController');
 const { autenticarToken, temPermissao } = require('../middleware/authMiddleware');
 
 // Rota para obter o histórico de manutenções finalizadas
-router.get('/historico', autenticarToken, manutencaoController.getManutencaoHistory); 
+router.get('/historico', autenticarToken, manutencaoController.getManutencaoHistory);
 
 // Rotas para Solicitações de Manutenção (gerenciamento normal)
 router.post('/solicitacoes', autenticarToken, temPermissao('solicitar_manutencao'), manutencaoController.createSolicitacao);
