@@ -8,6 +8,23 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilo para a linha de detalhes expansível */
+        .detalhes-condenacao-row td {
+            background-color: #f8f9fa;
+            padding: 0 !important;
+            border-top: none;
+        }
+        .detalhes-condenacao-content {
+            padding: 1rem;
+            background-color: #e9ecef;
+        }
+        .status-condenado {
+            font-weight: bold;
+            color: #000; /* Texto em preto */
+            background-color: #e2e3e5;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -33,29 +50,47 @@
 
             <ul class="nav nav-tabs pt-4" id="adminTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="cadastrados-tab" data-bs-toggle="tab" data-bs-target="#cadastrados-pane" type="button" role="tab" aria-controls="cadastrados-pane" aria-selected="true">Rádios Cadastrados</button>
+                    <button class="nav-link active" id="baixados-tab" data-bs-toggle="tab" data-bs-target="#baixados-pane" type="button" role="tab" aria-controls="baixados-pane" aria-selected="true">Rádios Baixados</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="cadastrados-tab" data-bs-toggle="tab" data-bs-target="#cadastrados-pane" type="button" role="tab" aria-controls="cadastrados-pane" aria-selected="false">Rádios Ativos</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="saidas-tab" data-bs-toggle="tab" data-bs-target="#saidas-pane" type="button" role="tab" aria-controls="saidas-pane" aria-selected="false">Histórico de Saídas</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="entradas-tab" data-bs-toggle="tab" data-bs-target="#entradas-pane" type="button" role="tab" aria-controls="entradas-pane" aria-selected="false">Histórico de Entradas</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="manutencao-tab" data-bs-toggle="tab" data-bs-target="#manutencao-pane" type="button" role="tab" aria-controls="manutencao-pane" aria-selected="false">Histórico de Manutenção</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="excluidos-tab" data-bs-toggle="tab" data-bs-target="#excluidos-pane" type="button" role="tab" aria-controls="excluidos-pane" aria-selected="false">Rádios Excluídos</button>
-                </li>
-                <li class="nav-item" role="presentation">
+                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="usuarios-tab" data-bs-toggle="tab" data-bs-target="#usuarios-pane" type="button" role="tab" aria-controls="usuarios-pane" aria-selected="false">Gerenciar Usuários</button>
                 </li>
             </ul>
 
             <div class="tab-content" id="adminTabsContent">
-                <div class="tab-pane fade show active p-3" id="cadastrados-pane" role="tabpanel">
-                    <input type="text" class="form-control mb-3" id="filtroRadiosCadastrados" placeholder="Filtrar por modelo, nº de série, usuário...">
+
+                <div class="tab-pane fade show active p-3" id="baixados-pane" role="tabpanel" aria-labelledby="baixados-tab">
+                    <h5 class="mb-3">Histórico de Rádios Condenados e Baixados</h5>
+                    <input type="text" class="form-control mb-3" id="filtroBaixados" placeholder="Filtrar por nº de série, modelo, patrimônio, técnico...">
                     <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Modelo</th>
+                                    <th>Nº de Série</th>
+                                    <th>Patrimônio</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>OS da Condenação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaRadiosBaixados">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade p-3" id="cadastrados-pane" role="tabpanel" aria-labelledby="cadastrados-tab">
+                     <h5 class="mb-3">Rádios Ativos no Sistema</h5>
+                     <input type="text" class="form-control mb-3" id="filtroRadiosCadastrados" placeholder="Filtrar por modelo, nº de série, usuário...">
+                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
@@ -68,105 +103,15 @@
                             </thead>
                             <tbody id="tabelaRadiosCadastrados"></tbody>
                         </table>
-                    </div>
+                     </div>
                 </div>
 
                 <div class="tab-pane fade p-3" id="saidas-pane" role="tabpanel">
-                    <input type="text" class="form-control mb-3" id="filtroSaidas" placeholder="Filtrar por Nº da NF, cliente ou nº de série...">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Nº NF</th>
-                                    <th>Cliente</th>
-                                    <th>Data Saída</th>
-                                    <th>Rádios</th>
-                                    <th>Tipo Locação</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelaSaidas"></tbody>
-                        </table>
                     </div>
-                </div>
-
-                <div class="tab-pane fade p-3" id="entradas-pane" role="tabpanel">
-                    <input type="text" class="form-control mb-3" id="filtroEntradas" placeholder="Filtrar por Nº da NF, cliente ou nº de série...">
-                     <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Nº NF</th>
-                                    <th>Cliente</th>
-                                    <th>Data Entrada</th>
-                                    <th>Rádios Retornados</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelaEntradas"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade p-3" id="manutencao-pane" role="tabpanel">
-                    <input type="text" class="form-control mb-3" id="filtroManutencao" placeholder="Filtrar por ID do pedido, solicitante, nº de série...">
-                     <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>ID Pedido</th>
-                                    <th>Solicitante</th>
-                                    <th>Data Conclusão</th>
-                                    <th>Técnico</th>
-                                    <th>Rádios</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelaManutencao"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade p-3" id="excluidos-pane" role="tabpanel">
-                    <input type="text" class="form-control mb-3" id="filtroExcluidos" placeholder="Filtrar por nº de série, modelo, patrimônio...">
-                     <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Nº Série</th>
-                                    <th>Modelo</th>
-                                    <th>Patrimônio</th>
-                                    <th>Excluído Por</th>
-                                    <th>Data</th>
-                                    <th>Motivo</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelaExcluidos"></tbody>
-                        </table>
-                    </div>
-                </div>
-
                 <div class="tab-pane fade p-3" id="usuarios-pane" role="tabpanel">
-                    <h4>Gerenciamento de Usuários</h4>
-                    <input type="text" class="form-control mb-3" id="filtroUsuarios" placeholder="Filtrar por email, permissão...">
-                    <div id="userManagementContent"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="customAlertModalLabel">Detalhes</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="customAlertPlaceholder" style="display:none;"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                     <h4>Gerenciamento de Usuários</h4>
+                     <input type="text" class="form-control mb-3" id="filtroUsuarios" placeholder="Filtrar por email, permissão...">
+                     <div id="userManagementContent"></div>
                 </div>
             </div>
         </div>

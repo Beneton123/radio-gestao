@@ -1,11 +1,13 @@
 const Radio = require('../models/Radio');
 const Modelo = require('../models/Modelo');
+const RadioExcluido = require('../models/RadioExcluido'); // Mantido caso use em outra parte
 
 /**
  * @route   POST /api/radios
  * @desc    Cadastra um novo rádio
  * @access  Privado (requer permissão)
  */
+
 exports.createRadio = async (req, res) => {
     try {
         const { modelo, numeroSerie, patrimonio, frequencia } = req.body;
@@ -21,23 +23,42 @@ exports.createRadio = async (req, res) => {
             return res.status(400).json({ message: `O modelo "${modelo}" não é válido. Cadastre o modelo primeiro.` });
         }
 
-        // VERIFICAÇÃO CORRETA: Procura por um rádio que tenha o mesmo número de série E que esteja ativo.
-        const radioExistente = await Radio.findOne({ numeroSerie: numeroSerieUpper, ativo: true });
-        if (radioExistente) {
-            return res.status(409).json({ message: 'Já existe um rádio ativo com este número de série.' });
+        // --- LÓGICA DE VERIFICAÇÃO ATUALIZADA ---
+        
+        // 1. Procura por QUALQUER rádio com o mesmo número de série, independentemente do status
+        const radioDuplicado = await Radio.findOne({ numeroSerie: numeroSerieUpper });
+
+        // 2. Se um rádio for encontrado, verifica o status dele
+        if (radioDuplicado) {
+            // Se o rádio encontrado estiver condenado, envia a mensagem específica
+            if (radioDuplicado.status === 'Condenado') {
+                return res.status(409).json({ message: 'Não é possível adicionar. Já existe um rádio com este número de série que foi condenado.' });
+            }
+            // Se o rádio encontrado estiver ativo, envia a mensagem de rádio ativo
+            if (radioDuplicado.ativo === true) {
+                 return res.status(409).json({ message: 'Já existe um rádio ativo com este número de série.' });
+            }
+            // Se for qualquer outro caso (ex: inativo mas não condenado), o índice do banco já bloquearia,
+            // mas podemos adicionar uma mensagem genérica para cobrir tudo.
+            return res.status(409).json({ message: 'Este número de série já existe no banco de dados e não pode ser reutilizado.' });
         }
+        // --- FIM DA LÓGICA DE VERIFICAÇÃO ---
 
         const novoRadio = new Radio({
             modelo: modeloExistente.nome,
             numeroSerie: numeroSerieUpper,
             patrimonio,
             frequencia,
-            cadastradoPor: req.usuario.id // Certifique-se que seu middleware de auth anexa 'usuario' ao 'req'
+            cadastradoPor: req.usuario.id
         });
 
         await novoRadio.save();
         res.status(201).json({ message: 'Rádio cadastrado com sucesso!', radio: novoRadio });
     } catch (error) {
+        // Tratamento de erro caso o índice do banco de dados pegue a duplicidade primeiro
+        if (error.code === 11000) {
+            return res.status(409).json({ message: 'Erro de duplicidade: Este número de série já existe.' });
+        }
         console.error("Erro em createRadio:", error);
         res.status(500).json({ message: 'Erro interno ao cadastrar rádio.', error: error.message });
     }
@@ -45,32 +66,32 @@ exports.createRadio = async (req, res) => {
 
 /**
  * @route   DELETE /api/radios/serial/:numeroSerie
- * @desc    Exclui (desativa) um rádio.
+ * @desc    Baixa (desativa) um rádio manualmente.
  * @access  Privado (Admin)
  */
 exports.deleteRadio = async (req, res) => {
     try {
         const { numeroSerie } = req.params;
+        const radioParaBaixar = await Radio.findOne({ numeroSerie: numeroSerie.toUpperCase(), ativo: true });
 
-        // LÓGICA CORRETA E MAIS SEGURA: Encontra o rádio ATIVO para desativar
-        const radioParaExcluir = await Radio.findOne({ numeroSerie: numeroSerie.toUpperCase(), ativo: true });
-
-        if (!radioParaExcluir) {
-            return res.status(404).json({ message: 'Rádio não encontrado ou já foi excluído.' });
+        if (!radioParaBaixar) {
+            return res.status(404).json({ message: 'Rádio não encontrado ou já foi baixado.' });
         }
         
-        if (radioParaExcluir.status !== 'Disponível') {
-            return res.status(400).json({ message: `Não é possível excluir. O rádio está com status "${radioParaExcluir.status}".` });
+        if (radioParaBaixar.status !== 'Disponível') {
+            return res.status(400).json({ message: `Não é possível baixar. O rádio está com status "${radioParaBaixar.status}".` });
         }
 
-        // Ação: Mudar o status para inativo
-        radioParaExcluir.ativo = false;
-        await radioParaExcluir.save();
+        radioParaBaixar.ativo = false;
+        radioParaBaixar.motivoBaixa = 'Exclusão/Baixa manual pelo painel de exclusão.';
+        radioParaBaixar.dataBaixa = new Date();
+        radioParaBaixar.usuarioBaixa = req.usuario.email;
+        await radioParaBaixar.save();
 
-        res.status(200).json({ message: 'Rádio excluído com sucesso.' });
+        res.status(200).json({ message: 'Rádio baixado com sucesso.' });
     } catch (error) {
-        console.error('ERRO DETALHADO AO EXCLUIR:', error);
-        res.status(500).json({ message: 'Erro interno ao excluir rádio.', error: error.message });
+        console.error('ERRO DETALHADO AO BAIXAR RÁDIO:', error);
+        res.status(500).json({ message: 'Erro interno ao baixar rádio.', error: error.message });
     }
 };
 
@@ -82,7 +103,7 @@ exports.deleteRadio = async (req, res) => {
 exports.getAllRadios = async (req, res) => {
     try {
         const { status, nfAtual, search } = req.query;
-        let query = { ativo: true }; // FILTRO PRINCIPAL (correto, esta função é para o estoque atual)
+        let query = { ativo: true };
 
         if (status) query.status = status;
         if (nfAtual) query.nfAtual = nfAtual;
@@ -144,13 +165,12 @@ exports.updatePatrimonio = async (req, res) => {
 
 /**
  * @route   GET /api/radios/cadastrados
- * @desc    Busca TODOS os registros de rádios (ativos e inativos) para o HISTÓRICO.
+ * @desc    Busca o histórico de rádios CADASTRADOS e ATIVOS para o painel admin.
  * @access  Privado (Admin)
  */
 exports.getRadiosCadastrados = async (req, res) => {
     try {
-        // CORREÇÃO: Busca todos os registros e ordena pela data de criação.
-        const radios = await Radio.find({})
+        const radios = await Radio.find({ ativo: true })
             .populate('cadastradoPor', 'email')
             .sort({ createdAt: -1 });
 
@@ -162,20 +182,48 @@ exports.getRadiosCadastrados = async (req, res) => {
 };
 
 /**
- * @route   GET /api/radios/excluidos
- * @desc    Busca apenas os rádios "excluídos" (inativos).
+ * @route   GET /api/radios/baixados
+ * @desc    Busca todos os rádios "baixados" (inativos), incluindo condenados.
  * @access  Privado (Admin)
  */
-exports.getRadiosExcluidos = async (req, res) => {
+exports.getRadiosBaixados = async (req, res) => {
     try {
-        // NOVA FUNÇÃO: Busca apenas rádios onde "ativo" é false.
         const radios = await Radio.find({ ativo: false })
-            .populate('cadastradoPor', 'email')
-            .sort({ updatedAt: -1 }); // Ordena por quando foi excluído
+            .sort({ dataBaixa: -1, dataCondenacao: -1 }); // Ordena pelas datas
 
         res.json(radios);
     } catch (error) {
-        console.error("Erro em getRadiosExcluidos:", error);
-        res.status(500).json({ message: 'Erro interno ao listar rádios excluídos.', error: error.message });
+        console.error("Erro em getRadiosBaixados:", error);
+        res.status(500).json({ message: 'Erro interno ao listar rádios baixados.', error: error.message });
+    }
+};
+
+// ===================================================================================
+// NOVA FUNÇÃO E REMOÇÃO DAS ANTIGAS
+// ===================================================================================
+
+/**
+ * @desc    As funções `transferirOS` e `marcarComoCondenado` foram REMOVIDAS daqui.
+ * A lógica correta e mais robusta para essas ações agora está centralizada
+ * no arquivo `manutencaoController.js` nas funções `transferirRadio` e
+ * `atualizarStatusRadio`.
+ */
+
+/**
+ * @route   GET /api/radios/condenados
+ * @desc    Busca APENAS os rádios com status "Condenado" com detalhes.
+ * @access  Privado (Admin)
+ */
+exports.getRadiosCondenados = async (req, res) => {
+    try {
+        const radiosCondenados = await Radio.find({ status: 'Condenado' })
+            .populate('tecnicoCondenacao', 'nome email') // Busca o nome e email do técnico
+            .populate('osCondenacao', 'idPedido') // Busca o ID da OS onde foi condenado
+            .sort({ dataCondenacao: -1 }); // Ordena pelos mais recentes
+
+        res.json(radiosCondenados);
+    } catch (error) {
+        console.error("Erro em getRadiosCondenados:", error);
+        res.status(500).json({ message: 'Erro interno ao listar rádios condenados.', error: error.message });
     }
 };

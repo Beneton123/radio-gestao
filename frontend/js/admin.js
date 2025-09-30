@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // A URL base da sua API.
-    const API_BASE_URL = 'http://10.110.120.237:5000/api';
 
     // --- FUNÇÕES UTILITÁRIAS ---
 
@@ -16,33 +14,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         return new Date(dataString).toLocaleDateString('pt-BR', options);
     }
 
-    // FUNÇÃO DE FILTRO CORRIGIDA E CENTRALIZADA
-    function aplicarFiltro(inputId, tableId) {
+    function aplicarFiltro(inputId, tableBodyId) {
         const input = document.getElementById(inputId);
-        const table = document.getElementById(tableId)?.getElementsByTagName('tbody')[0]; // Pega o corpo da tabela
-        if (!input || !table) return;
+        const tbody = document.getElementById(tableBodyId);
+        if (!input || !tbody) return;
 
-        const handleFilter = () => {
+        input.addEventListener('keyup', () => {
             const filter = input.value.toUpperCase();
-            const rows = table.getElementsByTagName('tr');
+            // Seleciona apenas as linhas de dados, ignorando as de detalhes
+            const rows = tbody.querySelectorAll('tr:not(.detalhes-condenacao-row)');
             
-            for (let i = 0; i < rows.length; i++) {
-                const cells = rows[i].getElementsByTagName('td');
+            rows.forEach(row => {
+                const cells = row.getElementsByTagName('td');
                 let found = false;
-                if (cells.length > 0) { // Garante que não é uma linha de "carregando" ou "vazio"
-                    for (let j = 0; j < cells.length; j++) {
-                        if (cells[j]) {
-                            if (cells[j].textContent.toUpperCase().indexOf(filter) > -1) {
-                                found = true;
-                                break;
-                            }
-                        }
+                for (let j = 0; j < cells.length; j++) {
+                    if (cells[j] && cells[j].textContent.toUpperCase().indexOf(filter) > -1) {
+                        found = true;
+                        break;
                     }
-                    rows[i].style.display = found ? '' : 'none';
                 }
-            }
-        };
-        input.addEventListener('keyup', handleFilter);
+                row.style.display = found ? '' : 'none';
+                // Esconde a linha de detalhes correspondente se a linha principal for escondida
+                const detalhesRow = row.nextElementSibling;
+                if (detalhesRow && detalhesRow.classList.contains('detalhes-condenacao-row')) {
+                    detalhesRow.style.display = 'none';
+                }
+            });
+        });
     }
     
     // --- CARREGAMENTO DE DADOS DAS ABAS ---
@@ -54,87 +52,103 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/radios/cadastrados`, {
+            const response = await fetch(`/api/radios/cadastrados`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-
             if (!response.ok) throw new Error('Falha ao carregar o histórico de rádios.');
-
             const radios = await response.json();
-            tabela.innerHTML = '';
-
+            
             if (radios.length === 0) {
                 tabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum rádio cadastrado.</td></tr>';
                 return;
             }
-
-            // A lista já vem ordenada do backend
-            radios.forEach(radio => {
-                const cadastradoPor = radio.cadastradoPor ? radio.cadastradoPor.email : 'N/A';
-                const row = `
-                    <tr>
-                        <td>${radio.modelo}</td>
-                        <td>${radio.numeroSerie}</td>
-                        <td>${radio.frequencia}</td>
-                        <td>${formatarDataHora(radio.createdAt)}</td>
-                        <td>${cadastradoPor}</td>
-                    </tr>
-                `;
-                tabela.innerHTML += row;
-            });
-
+            
+            tabela.innerHTML = radios.map(radio => `
+                <tr>
+                    <td>${radio.modelo}</td>
+                    <td>${radio.numeroSerie}</td>
+                    <td>${radio.frequencia}</td>
+                    <td>${formatarDataHora(radio.createdAt)}</td>
+                    <td>${radio.cadastradoPor ? radio.cadastradoPor.email : 'N/A'}</td>
+                </tr>
+            `).join('');
         } catch (error) {
             console.error('Erro:', error);
             tabela.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
         }
     }
 
-    async function carregarHistoricoExcluidos() {
-        const tabela = document.getElementById('tabelaExcluidos');
+    // FUNÇÃO TOTALMENTE REFEITA PARA RÁDIOS CONDENADOS
+    async function carregarRadiosBaixados() {
+        const tabela = document.getElementById('tabelaRadiosBaixados');
         if (!tabela) return;
-        tabela.innerHTML = '<tr><td colspan="6" class="text-center">Carregando...</td></tr>';
+        tabela.innerHTML = '<tr><td colspan="7" class="text-center">Carregando...</td></tr>';
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/radios/excluidos`, {
+            // 1. Buscando do novo endpoint /condenados
+            const response = await fetch(`/api/radios/condenados`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (!response.ok) throw new Error('Falha ao carregar rádios excluídos.');
-
-            const radios = await response.json();
-            tabela.innerHTML = '';
-
-            if (radios.length === 0) {
-                tabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum rádio excluído encontrado.</td></tr>';
+            if (!response.ok) throw new Error('Falha ao carregar rádios condenados.');
+            const radiosCondenados = await response.json();
+            
+            if (radiosCondenados.length === 0) {
+                tabela.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum rádio condenado encontrado.</td></tr>';
                 return;
             }
-
-            radios.forEach(radio => {
-                const cadastradoPor = radio.cadastradoPor ? radio.cadastradoPor.email : 'N/A';
-                const row = `
-                    <tr>
-                        <td>${radio.numeroSerie}</td>
+            
+            let content = '';
+            // 2. Criando as linhas da tabela com os novos dados e a linha de detalhes oculta
+            radiosCondenados.forEach(radio => {
+                const dataCondenacaoFormatada = formatarData(radio.dataCondenacao);
+                const osCondenacaoId = radio.osCondenacao ? radio.osCondenacao.idPedido : 'N/A';
+                
+                // Linha principal, visível
+                content += `
+                    <tr class="linha-radio-condenado">
                         <td>${radio.modelo}</td>
+                        <td>${radio.numeroSerie}</td>
                         <td>${radio.patrimonio || 'N/A'}</td>
-                        <td>${cadastradoPor}</td>
-                        <td>${formatarDataHora(radio.updatedAt)}</td>
-                        <td>N/A</td>
+                        <td><span class="badge status-condenado">Condenado</span></td>
+                        <td>${dataCondenacaoFormatada}</td>
+                        <td>${osCondenacaoId}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info btn-ver-detalhes-condenacao" data-bs-toggle="collapse" data-bs-target="#detalhes-condenacao-${radio._id}">
+                                <i class="bi bi-eye"></i> Ver Detalhes
+                            </button>
+                        </td>
                     </tr>
                 `;
-                tabela.innerHTML += row;
+                
+                // Linha de detalhes, oculta (usa a classe .collapse do Bootstrap)
+                const tecnico = radio.tecnicoCondenacao ? `${radio.tecnicoCondenacao.nome} (${radio.tecnicoCondenacao.email})` : 'Não informado';
+                content += `
+                    <tr class="detalhes-condenacao-row collapse" id="detalhes-condenacao-${radio._id}">
+                        <td colspan="7">
+                            <div class="detalhes-condenacao-content">
+                                <p><strong>Motivo da Condenação:</strong> ${radio.motivoCondenacao || 'Não especificado.'}</p>
+                                <p><strong>Técnico Responsável:</strong> ${tecnico}</p>
+                                <p><strong>Data e Hora Exata:</strong> ${formatarDataHora(radio.dataCondenacao)}</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
             });
+            
+            tabela.innerHTML = content;
+
         } catch (error) {
             console.error('Erro:', error);
-            tabela.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`;
+            tabela.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
         }
     }
 
-    // --- Coloque aqui suas outras funções que já existem (se houver) ---
-    async function carregarHistoricoSaidas() { /* ... Seu código ... */ }
-    async function carregarHistoricoEntradas() { /* ... Seu código ... */ }
-    async function carregarHistoricoManutencao() { /* ... Seu código ... */ }
-    async function loadUsers() { /* ... Seu código ... */ }
+    // --- Suas outras funções de carregamento podem ser adicionadas aqui ---
+    // async function carregarHistoricoSaidas() { /* ... */ }
+    // async function carregarHistoricoEntradas() { /* ... */ }
+    // async function loadUsers() { /* ... */ }
 
     // --- INICIALIZAÇÃO E EVENTOS ---
 
@@ -142,24 +156,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (adminTabs) {
         const handleTabChange = async (tabId) => {
             switch (tabId) {
+                case 'baixados-tab':
+                    await carregarRadiosBaixados();
+                    break;
                 case 'cadastrados-tab':
                     await carregarRadiosCadastrados();
                     break;
-                case 'saidas-tab':
-                    // await carregarHistoricoSaidas(); // Implemente esta função se necessário
-                    break;
-                case 'entradas-tab':
-                    // await carregarHistoricoEntradas(); // Implemente esta função se necessário
-                    break;
-                case 'manutencao-tab':
-                    // await carregarHistoricoManutencao(); // Implemente esta função se necessário
-                    break;
-                case 'excluidos-tab':
-                    await carregarHistoricoExcluidos();
-                    break;
-                case 'usuarios-tab':
-                    // await loadUsers(); // Implemente esta função se necessário
-                    break;
+                // Adicione os 'cases' para suas outras abas aqui
             }
         };
         
@@ -168,23 +171,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 handleTabChange(event.target.id);
             });
         });
-
-        // Aplica os filtros para todas as abas
+        
+        // Aplica os filtros
+        aplicarFiltro('filtroBaixados', 'tabelaRadiosBaixados');
         aplicarFiltro('filtroRadiosCadastrados', 'tabelaRadiosCadastrados');
-        aplicarFiltro('filtroSaidas', 'tabelaSaidas');
-        aplicarFiltro('filtroEntradas', 'tabelaEntradas');
-        aplicarFiltro('filtroManutencao', 'tabelaManutencao');
-        aplicarFiltro('filtroExcluidos', 'tabelaExcluidos');
-        aplicarFiltro('filtroUsuarios', 'tabelaUsuarios');
-
-        // Carrega o conteúdo da aba que já está ativa ao carregar a página
+        
+        // Carrega o conteúdo da aba ativa inicial
         const activeTabButton = document.querySelector('#adminTabs .nav-link.active');
         if (activeTabButton) {
             handleTabChange(activeTabButton.id);
         }
     }
 
-    if (typeof setupLogout === 'function') {
-        setupLogout();
+    if (typeof checkAuthentication === 'function') {
+        checkAuthentication('admin');
     }
 });

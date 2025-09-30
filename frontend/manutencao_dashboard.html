@@ -10,32 +10,41 @@
     <style>
         /* CSS para a linha de detalhes e nav-tabs */
         .detalhes-pedido {
-            /* Removido 'display: none;' daqui para evitar conflitos com Bootstrap d-none */
-            background-color: #f0f8ff; /* Cor de fundo suave para a linha expandida */
-            margin-top: -1px; /* Para que a borda de cima se junte à linha do pedido */
+            background-color: #f0f8ff;
+            margin-top: -1px;
             border-bottom: 1px solid #dee2e6;
             border-left: 1px solid #dee2e2;
             border-right: 1px solid #dee2e6;
         }
         .detalhes-pedido td div {
-            padding: 15px; /* Espaçamento interno para o conteúdo dos detalhes */
+            padding: 15px;
         }
-        /* Alinhamento vertical do conteúdo das células da tabela */
         .table-pedidos th, .table-pedidos td {
             vertical-align: middle;
         }
-        /* Estilos para as abas de navegação */
         .nav-tabs .nav-link {
-            color: #495057; /* Cor do texto das abas inativas */
+            color: #495057;
         }
         .nav-tabs .nav-link.active {
-            color: var(--cor-primaria, #880202); /* Cor do texto da aba ativa (vermelho escuro) */
-            border-color: #dee2e6 #dee2e6 var(--cor-primaria, #880202); /* Borda inferior da aba ativa */
-            font-weight: bold; /* Texto em negrito para a aba ativa */
+            color: var(--cor-primaria, #880202);
+            border-color: #dee2e6 #dee2e6 var(--cor-primaria, #880202);
+            font-weight: bold;
         }
-        /* Estilo para o cabeçalho das sub-colunas de rádio dentro dos detalhes expandidos */
         .detalhes-pedido .row.bg-light {
-            background-color: #e9ecef !important; /* Cor de fundo para o cabeçalho das colunas de rádio */
+            background-color: #e9ecef !important;
+        }
+        /* Estilos para destacar status de rádio individual na OS */
+        .radio-concluido {
+            background-color: #d1e7dd !important; /* Verde claro */
+        }
+        .radio-condenado {
+            background-color: #e2e3e5 !important; /* Cinza claro */
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        .radio-transferido {
+            background-color: #fff3cd !important; /* Laranja/amarelo claro */
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -52,6 +61,7 @@
         <a href="entrada.html">📥 Retorno de Locação</a>
         <a href="extrato.html">📄 Extrato de NF</a>
         <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="admin.html">⚙️ Administração</a>
         <a href="#" id="logout-link">🚪 Sair</a>
     </div>
 
@@ -90,7 +100,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -112,7 +122,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -131,17 +141,16 @@
                             <table class="table table-bordered table-hover" id="tabelaEstoqueManutencao">
                                 <thead>
                                     <tr>
-                                        <th>Nº Série</th>
+                                        <th>ID Ordem de Serviço</th>
                                         <th>Modelo</th>
-                                        <th>Patrimônio</th>
-                                        <th>Problema Descrito</th>
-                                        <th>ID Pedido Vinculado</th>
-                                        <th>Status do Pedido</th>
+                                        <th>Frequência</th>
+                                        <th>Nº de Série</th>
                                         <th>Técnico Responsável</th>
+                                        <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    </tbody>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -166,12 +175,11 @@
                                         <th>Data Conclusão</th>
                                         <th>Técnico</th>
                                         <th>Qtd. Rádios</th>
-                                        <th>Observações Técnicas (Resumo)</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    </tbody>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -228,17 +236,17 @@
     <div class="modal fade" id="modalInputObservacoesTecnicas" tabindex="-1" aria-labelledby="modalInputObservacoesTecnicasLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalInputObservacoesTecnicasLabel">Concluir Manutenção</h5>
+                <div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalInputObservacoesTecnicasLabel">Concluir Manutenção da OS</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Adicione observações técnicas para a conclusão do pedido (opcional):</p>
-                    <textarea class="form-control" id="inputObservacoesTecnicas" rows="3" placeholder="Ex: Troca de bateria, reparo no PTT, etc."></textarea>
+                    <p>Adicione observações técnicas para a conclusão de toda a OS (opcional):</p>
+                    <textarea class="form-control" id="inputObservacoesTecnicas" rows="3" placeholder="Ex: Todos os reparos foram finalizados..."></textarea>
                     <input type="hidden" id="idPedidoParaConcluirManutencao">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnConfirmarInputObservacoesTecnicas">Concluir</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarInputObservacoesTecnicas">Concluir OS</button>
                 </div>
             </div>
         </div>
@@ -260,7 +268,82 @@
             </div>
         </div>
     </div>
+    
+    <div class="modal fade" id="modalDarBaixa" tabindex="-1" aria-labelledby="modalDarBaixaLabel" aria-hidden="true">
+    </div>
 
+    <div class="modal fade" id="modalCondenarRadio" tabindex="-1" aria-labelledby="modalCondenarRadioLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-custom-danger text-white">
+                    <h5 class="modal-title" id="modalCondenarRadioLabel">Condenar Rádio</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Você está prestes a condenar o rádio <strong id="radioParaCondenarInfo"></strong>. Esta ação é permanente e irá movê-lo para o histórico de baixados.</p>
+                    <div class="mb-3">
+                        <label for="motivoCondenacao" class="form-label">Motivo da Condenação (obrigatório):</label>
+                        <textarea class="form-control" id="motivoCondenacao" rows="3" placeholder="Ex: Dano irreparável na placa principal..."></textarea>
+                    </div>
+                    <input type="hidden" id="idPedidoParaCondenar">
+                    <input type="hidden" id="radioSubIdParaCondenar">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarCondenacao">Confirmar Condenação</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalTransferirRadio" tabindex="-1" aria-labelledby="modalTransferirRadioLabel" aria-hidden="true">
+       
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-custom-danger text-white">
+                    <h5 class="modal-title" id="modalTransferirRadioLabel">Transferir Rádio</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Transferindo o rádio <strong id="radioParaTransferirInfo"></strong> da OS <strong id="osOrigemParaTransferirInfo"></strong>.</p>
+                    <input type="hidden" id="idPedidoOrigemParaTransferencia">
+                    <input type="hidden" id="radioSubIdParaTransferencia">
+                    <div class="mb-3">
+                        <label class="form-label">Destino da Transferência:</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tipoDestino" id="destinoNovaOS" value="nova" checked>
+                            <label class="form-check-label" for="destinoNovaOS">Criar uma nova OS</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tipoDestino" id="destinoOsExistente" value="existente">
+                            <label class="form-check-label" for="destinoOsExistente">Transferir para OS existente</label>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="campoOsExistente" style="display: none;">
+                        <label for="idPedidoExistente" class="form-label">ID da OS de Destino:</label>
+                        <input type="text" class="form-control" id="idPedidoExistente" placeholder="Digite o ID da OS (Ex: PE000123)">
+                    </div>
+                    <div class="mb-3">
+                        <label for="novaPrioridade" class="form-label">Prioridade:</label>
+                        <select id="novaPrioridade" class="form-select">
+                            <option value="baixa">Baixa</option>
+                            <option value="media" selected>Média</option>
+                            <option value="alta">Alta</option>
+                            <option value="urgente">Urgente</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="novoProblema" class="form-label">Novo Problema / Motivo (obrigatório):</label>
+                        <textarea class="form-control" id="novoProblema" rows="3" placeholder="Descreva o problema ou o motivo..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarTransferencia">Confirmar Transferência</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/ui.js"></script>
