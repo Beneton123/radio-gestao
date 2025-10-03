@@ -85,10 +85,7 @@ body {
     vertical-align: middle;
 }
 
-/* Botões (usando classes Bootstrap e personalizando .btn-danger) */
-.btn-primary { /* Se precisar de um botão primário azul Bootstrap */
-    /* background-color: #0d6efd; border-color: #0d6efd; */
-}
+
 
 .btn-danger { /* Mantendo o estilo do botão de saida.html */
     background-color: #880202; /* Cor primária */
@@ -101,11 +98,6 @@ body {
 }
 
 /* --- ESTILOS DO MODAL DE ALERTA CUSTOMIZADO --- */
-/*
-   Estas classes 'bg-success', 'bg-warning', 'bg-danger', 'bg-info', 'bg-primary'
-   são as classes utilitárias do Bootstrap. Estamos apenas garantindo que a cor do texto
-   seja legível e que o botão de fechar seja branco para contraste.
-*/
 .modal-header.bg-success {
     background-color: #198754 !important; /* Verde padrão do Bootstrap */
     color: white;
@@ -131,12 +123,6 @@ body {
     color: white;
 }
 
-/* As classes 'bg-custom-danger', 'bg-custom-success', 'bg-custom-warning'
-   que você já tinha também podem ser usadas, mas preferi usar as classes
-   padrão do Bootstrap (bg-success, bg-warning, bg-danger, etc.) na função
-   showAlert para maior compatibilidade e menos classes personalizadas.
-   Mantenho suas definições abaixo, caso ainda as use em outro lugar.
-*/
 .modal-header.bg-custom-danger {
     background-color: #880202 !important; /* Sua cor primária personalizada */
     color: white;
@@ -163,4 +149,10 @@ body {
 /* Garante que o título do modal tenha uma cor de contraste */
 #customAlertModalLabel {
     color: inherit; /* Herda a cor do texto do modal-header */
+}
+
+/* --- CÓDIGO DE CORREÇÃO PARA SOBREPOSIÇÃO DE MODAIS --- */
+/* Força o modal de alerta a ficar sempre na frente */
+#customAlertModal {
+  z-index: 1060;
 }

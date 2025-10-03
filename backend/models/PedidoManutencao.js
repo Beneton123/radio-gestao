@@ -8,10 +8,10 @@ const radioEmManutencaoSchema = new mongoose.Schema({
     patrimonio: { type: String },
     descricaoProblema: { type: String, required: true },
     status: {
-        type: String,
-        default: 'Pendente',
-        enum: ['Pendente', 'Concluído', 'Condenado', 'Transferido']
-    },
+    type: String,
+    default: 'Pendente',
+    enum: ['Pendente', 'Manutenção', 'Concluído', 'Condenado', 'Transferido'] 
+},
     transferidoParaOS: { type: mongoose.Schema.Types.ObjectId, ref: 'PedidoManutencao', default: null }
 }, { _id: true }); // GARANTE QUE CADA RÁDIO TENHA UM ID ÚNICO
 
