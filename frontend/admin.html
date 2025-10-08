@@ -3,54 +3,48 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Administração e Históricos - RadioScan</title>
+    <title>Administração - RadioScan</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Estilo para a linha de detalhes expansível */
-        .detalhes-condenacao-row td {
-            background-color: #f8f9fa;
-            padding: 0 !important;
-            border-top: none;
-        }
-        .detalhes-condenacao-content {
-            padding: 1rem;
-            background-color: #e9ecef;
-        }
-        .status-condenado {
-            font-weight: bold;
-            color: #000; /* Texto em preto */
-            background-color: #e2e3e5;
-        }
-    </style>
 </head>
 <body class="bg-light">
 
     <div class="sidebar" id="sidebar">
-        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo">
-        <a href="index.html">🏠 Início</a>
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" class="logo" style="height: 67.5px; width: 100%;">
+        <a href="index.html" class="active">🏠 Início</a>
+        
         <a href="registrar.html">➕ Cadastrar Rádio</a>
         <a href="excluir.html">❌ Excluir Rádio</a>
         <a href="estoque.html">📦 Estoque</a>
+        
         <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
-        <a href="manutencao_dashboard.html">🔧 Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a> 
+        
         <a href="saida.html">📤 NF de Saída</a>
         <a href="entrada.html">📥 Retorno de Locação</a>
         <a href="extrato.html">📄 Extrato de NF</a>
+
+       <a href="gerenciar-nf.html">🧾 Gerenciar NF</a>
+
         <a href="historico.html">📚 Histórico de Rádio</a>
-        <a href="admin.html" class="active">⚙️ Administração</a>
+
+        <a href="admin.html">⚙️ Painel Admin</a>
+
         <a href="#" id="logout-link">🚪 Sair</a>
     </div>
 
     <div class="content">
         <div class="main-card mt-4">
-            <div class="card-title-embedded">PAINEL DE ADMINISTRAÇÃO E HISTÓRICOS</div>
+            <div class="card-title-embedded">PAINEL DE ADMINISTRAÇÃO</div>
 
             <ul class="nav nav-tabs pt-4" id="adminTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="baixados-tab" data-bs-toggle="tab" data-bs-target="#baixados-pane" type="button" role="tab" aria-controls="baixados-pane" aria-selected="true">Rádios Baixados</button>
+                    <button class="nav-link active" id="usuarios-tab" data-bs-toggle="tab" data-bs-target="#usuarios-pane" type="button" role="tab" aria-controls="usuarios-pane" aria-selected="true">Gerenciar Usuários</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="baixados-tab" data-bs-toggle="tab" data-bs-target="#baixados-pane" type="button" role="tab" aria-controls="baixados-pane" aria-selected="false">Rádios Baixados</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="cadastrados-tab" data-bs-toggle="tab" data-bs-target="#cadastrados-pane" type="button" role="tab" aria-controls="cadastrados-pane" aria-selected="false">Rádios Ativos</button>
@@ -58,60 +52,87 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="saidas-tab" data-bs-toggle="tab" data-bs-target="#saidas-pane" type="button" role="tab" aria-controls="saidas-pane" aria-selected="false">Histórico de Saídas</button>
                 </li>
-                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="usuarios-tab" data-bs-toggle="tab" data-bs-target="#usuarios-pane" type="button" role="tab" aria-controls="usuarios-pane" aria-selected="false">Gerenciar Usuários</button>
-                </li>
             </ul>
 
             <div class="tab-content" id="adminTabsContent">
-
-                <div class="tab-pane fade show active p-3" id="baixados-pane" role="tabpanel" aria-labelledby="baixados-tab">
-                    <h5 class="mb-3">Histórico de Rádios Condenados e Baixados</h5>
-                    <input type="text" class="form-control mb-3" id="filtroBaixados" placeholder="Filtrar por nº de série, modelo, patrimônio, técnico...">
+                <div class="tab-pane fade show active p-3" id="usuarios-pane" role="tabpanel" aria-labelledby="usuarios-tab">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Usuários do Sistema</h5>
+                        <button class="btn btn-success" id="btnAdicionarUsuario"><i class="bi bi-plus-circle"></i> Adicionar Novo Usuário</button>
+                    </div>
+                    <input type="text" class="form-control mb-3" id="filtroUsuarios" placeholder="Filtrar por nome, email ou permissão...">
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Modelo</th>
-                                    <th>Nº de Série</th>
-                                    <th>Patrimônio</th>
-                                    <th>Status</th>
-                                    <th>Data</th>
-                                    <th>OS da Condenação</th>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Permissões</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
-                            <tbody id="tabelaRadiosBaixados">
-                                </tbody>
+                            <tbody id="tabelaUsuarios"></tbody>
                         </table>
                     </div>
                 </div>
-
+                <div class="tab-pane fade p-3" id="baixados-pane" role="tabpanel" aria-labelledby="baixados-tab">
+                    </div>
                 <div class="tab-pane fade p-3" id="cadastrados-pane" role="tabpanel" aria-labelledby="cadastrados-tab">
-                     <h5 class="mb-3">Rádios Ativos no Sistema</h5>
-                     <input type="text" class="form-control mb-3" id="filtroRadiosCadastrados" placeholder="Filtrar por modelo, nº de série, usuário...">
-                     <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Modelo</th>
-                                    <th>Nº de Série</th>
-                                    <th>Frequência</th>
-                                    <th>Data Cadastro</th>
-                                    <th>Cadastrado Por</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelaRadiosCadastrados"></tbody>
-                        </table>
-                     </div>
-                </div>
-
+                   </div>
                 <div class="tab-pane fade p-3" id="saidas-pane" role="tabpanel">
-                    </div>
-                <div class="tab-pane fade p-3" id="usuarios-pane" role="tabpanel">
-                     <h4>Gerenciamento de Usuários</h4>
-                     <input type="text" class="form-control mb-3" id="filtroUsuarios" placeholder="Filtrar por email, permissão...">
-                     <div id="userManagementContent"></div>
+                   </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalUsuario" tabindex="-1" aria-labelledby="modalUsuarioLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalUsuarioLabel">Adicionar Novo Usuário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formUsuario">
+                        <input type="hidden" id="usuarioId">
+                        <div class="mb-3">
+                            <label for="nomeUsuario" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nomeUsuario" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="emailUsuario" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="emailUsuario" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="senhaUsuario" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="senhaUsuario">
+                            <small class="form-text text-muted">A senha deve ter no mínimo 6 caracteres. Deixe em branco para não alterar.</small>
+                        </div>
+                        <hr>
+                        <h6>Permissões</h6>
+                        <div class="row" id="checkboxesPermissoes"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" form="formUsuario" id="btnSalvarUsuario">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="customAlertModalHeader">
+                    <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="customAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
                 </div>
             </div>
         </div>

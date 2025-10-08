@@ -4,25 +4,30 @@ const manutencaoController = require('../controllers/manutencaoController');
 const { autenticarToken, temPermissao } = require('../middleware/authMiddleware');
 
 
-router.get('/historico', autenticarToken, temPermissao('gerenciar_manutencao'), manutencaoController.getManutencaoHistory);
+router.get('/historico', autenticarToken, temPermissao('manutencao_dashboard'), manutencaoController.getManutencaoHistory);
 
 
 router.post('/solicitacoes', autenticarToken, temPermissao('solicitar_manutencao'), manutencaoController.createSolicitacao);
 router.get('/solicitacoes', autenticarToken, manutencaoController.getAllSolicitacoes);
-router.get('/solicitacoes/:idPedido', autenticarToken, manutencaoController.getSolicitacaoById);
+// ALTERADO AQUI
+router.get('/solicitacoes/:id', autenticarToken, manutencaoController.getSolicitacaoById);
 
 // Rotas de workflow da OS (Dar Andamento, Iniciar, etc.)
-router.post('/solicitacoes/:idPedido/dar-andamento', autenticarToken, temPermissao('gerenciar_manutencao'), manutencaoController.darAndamento);
-router.post('/solicitacoes/:idPedido/iniciar', autenticarToken, temPermissao('gerenciar_manutencao'), manutencaoController.iniciarManutencao);
-router.post('/solicitacoes/:idPedido/concluir', autenticarToken, temPermissao('gerenciar_manutencao'), manutencaoController.concluirManutencao);
+// ALTERADO AQUI
+router.post('/solicitacoes/:id/dar-andamento', autenticarToken, temPermissao('manutencao_dashboard'), manutencaoController.darAndamento);
+// ALTERADO AQUI
+router.post('/solicitacoes/:id/iniciar', autenticarToken, temPermissao('manutencao_dashboard'), manutencaoController.iniciarManutencao);
+// ALTERADO AQUI
+router.post('/solicitacoes/:id/concluir', autenticarToken, temPermissao('manutencao_dashboard'), manutencaoController.concluirManutencao);
 
-router.post('/solicitacoes/:idPedido/radio/:radioSubId/status', 
+// ALTERADO AQUI
+router.post('/solicitacoes/:id/radio/:radioSubId/status', 
     autenticarToken, 
-    temPermissao('gerenciar_manutencao'), 
+    temPermissao('manutencao_dashboard'), 
     manutencaoController.atualizarStatusRadio
 );
 
 
-router.get('/estoque', autenticarToken, temPermissao('gerenciar_manutencao'), manutencaoController.getEstoqueManutencao);
+router.get('/estoque', autenticarToken, temPermissao('manutencao_dashboard'), manutencaoController.getEstoqueManutencao);
 
 module.exports = router;

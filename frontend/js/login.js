@@ -37,15 +37,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const data = await res.json();
 
-                if (res.ok) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('permissoes', JSON.stringify(data.permissoes));
-                    // O backend agora retorna nomeUsuario, vamos usar esse padrão.
-                    if (data.nomeUsuario) {
-                        localStorage.setItem('nomeUsuario', data.nomeUsuario);
-                    }
-                    window.location.href = 'index.html';
-                } else {
+// ...
+if (res.ok) {
+   
+    localStorage.setItem('token', data.token);
+
+    const usuario = {
+        nome: data.nomeUsuario,
+        permissoes: data.permissoes
+    };
+
+
+    localStorage.setItem('usuario', JSON.stringify(usuario));
+
+    window.location.href = 'index.html';
+
+}else {
                     showAlert('Falha no Login', data.message || 'Credenciais inválidas.', 'danger');
                 }
             } catch (error) {

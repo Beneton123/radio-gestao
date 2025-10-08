@@ -3,20 +3,20 @@
 const API_BASE_URL = 'http://10.110.120.237:5000/api';
 
 document.addEventListener('DOMContentLoaded', () => {
-    try {
-        checkAuthentication('entrada');
+    try {
+        checkAuthentication('entrada');
 
-        document.getElementById('btnBuscarNF').addEventListener('click', buscarNF);
-        document.getElementById('formEntrada').addEventListener('submit', handleFormEntradaSubmit);
-        
-        const dataEntradaInput = document.getElementById('dataEntrada');
-        if (dataEntradaInput) {
-            dataEntradaInput.valueAsDate = new Date();
-        }
+        document.getElementById('btnBuscarNF').addEventListener('click', buscarNF);
+        document.getElementById('formEntrada').addEventListener('submit', handleFormEntradaSubmit);
+        
+        const dataEntradaInput = document.getElementById('dataEntrada');
+        if (dataEntradaInput) {
+            dataEntradaInput.valueAsDate = new Date();
+        }
 
-    } catch (error) {
-        console.error("Erro na inicialização da página de Entrada de Rádios:", error.message);
-    }
+    } catch (error) {
+        console.error("Erro na inicialização da página de Entrada de Rádios:", error.message);
+    }
 });
 
 async function buscarNF() {
@@ -35,7 +35,7 @@ async function buscarNF() {
 
     try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_BASE_URL}/notasfiscais/${nfNumero}`, {
+         const res = await fetch(`${API_BASE_URL}/notasfiscais/numero/${nfNumero}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -46,7 +46,6 @@ async function buscarNF() {
             return;
         }
 
-        // CORREÇÃO: Cabeçalho com Nome do Cliente e Data de Saída
         let infoHeader = `
             <hr>
             <h6 class="mb-3 fw-bold">Rádios da NF ${data.nfNumero}</h6>
@@ -56,7 +55,6 @@ async function buscarNF() {
             </p>
         `;
 
-        // FEATURE: Aviso de devolução parcial
         if (data.retornosParciais && data.retornosParciais.length > 0) {
             let retornosAnterioresHtml = data.retornosParciais.map(retorno => 
                 `<li>${retorno.radios.length} rádio(s) retornado(s) em ${new Date(retorno.dataEntrada).toLocaleDateString('pt-BR')}</li>`
@@ -70,14 +68,13 @@ async function buscarNF() {
             `;
         }
         
-        // FEATURE: Filtra para mostrar apenas os rádios que AINDA NÃO retornaram
         const radiosPendentes = data.radios.filter(radio => !(data.radiosRetornados || []).includes(radio.numeroSerie));
 
         let radiosHtml = '<p>Selecione os rádios que estão retornando e o status de cada um:</p><ul class="list-group">';
 
         if (radiosPendentes.length === 0) {
             radiosHtml += '<li class="list-group-item text-success"><i class="bi bi-check-all"></i> Todos os rádios desta NF já foram retornados.</li>';
-            document.getElementById('btnRegistrarEntrada').disabled = true; // Desabilita o botão
+            document.getElementById('btnRegistrarEntrada').disabled = true;
         } else {
             document.getElementById('btnRegistrarEntrada').disabled = false;
         }
@@ -92,10 +89,10 @@ async function buscarNF() {
                             <small class="text-muted">${radio.modelo} - Patrimônio: ${radio.patrimonio || 'N/A'}</small>
                         </label>
                     </div>
-                    <div style="width: 220px;">
+                    <div style="width: 250px;">
                         <select class="form-select status-retorno-select">
                             <option value="Disponível" selected>Retornou OK (Disponível)</option>
-                            <option value="Manutenção">Defeito (Manutenção)</option>
+                            <option value="Defeituoso">Defeito (Enviar p/ Manutenção)</option>
                         </select>
                     </div>
                 </li>
@@ -113,61 +110,75 @@ async function buscarNF() {
 }
 
 async function handleFormEntradaSubmit(e) {
-    e.preventDefault();
-    
-    const btnSubmit = document.getElementById('btnRegistrarEntrada');
-    const nfNumero = document.getElementById('nfEntrada').value.trim();
-    const dataEntrada = document.getElementById('dataEntrada').value;
-    const observacoes = document.getElementById('observacoes').value.trim().split('\n').filter(Boolean);
+    e.preventDefault();
+    
+    const btnSubmit = document.getElementById('btnRegistrarEntrada');
+    const nfNumeroSaida = document.getElementById('nfEntrada').value.trim(); // NF de referência
+    const nfNumeroEntrada = document.getElementById('nfNumeroEntrada').value.trim(); // NOVO: Campo para o número da NF de Entrada
+    const dataEntrada = document.getElementById('dataEntrada').value;
+    const observacoes = document.getElementById('observacoes').value.trim().split('\n').filter(Boolean);
 
-    const radiosRetornados = [];
+    const radios = []; // Nome do array alterado para 'radios' para consistência
     document.querySelectorAll('.radio-retorno-checkbox:checked').forEach(checkbox => {
         const container = checkbox.closest('.list-group-item');
         const numeroSerie = container.dataset.serie;
-        const statusRetorno = container.querySelector('.status-retorno-select').value;
-        radiosRetornados.push({ numeroSerie, statusRetorno });
+        
+        // --- CORREÇÃO PRINCIPAL APLICADA AQUI ---
+        const status = container.querySelector('.status-retorno-select').value;
+        radios.push({ numeroSerie, status }); // Mudei de 'statusRetorno' para 'status'
     });
 
-    if (!nfNumero || !dataEntrada) {
-        showAlert('Campos Obrigatórios', 'N° da NF e Data da Entrada são obrigatórios.', 'warning');
+    if (!nfNumeroEntrada || !nfNumeroSaida || !dataEntrada) {
+        showAlert('Campos Obrigatórios', 'N° da NF de Entrada, N° da NF de Saída e Data são obrigatórios.', 'warning');
         return;
     }
 
-    if (radiosRetornados.length === 0) {
-        showAlert('Nenhum Rádio Selecionado', 'Você deve selecionar pelo menos um rádio que está retornando.', 'warning');
-        return;
-    }
-    
-    const token = localStorage.getItem('token');
+    if (radios.length === 0) {
+        showAlert('Nenhum Rádio Selecionado', 'Você deve selecionar pelo menos um rádio que está retornando.', 'warning');
+        return;
+    }
+    
+    const token = localStorage.getItem('token');
     btnSubmit.disabled = true;
     btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Registrando...';
 
-    try {
-        const res = await fetch(`${API_BASE_URL}/notasfiscais/entrada`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ nfNumero, dataEntrada, observacoes, radiosRetornados }) 
-        });
+    // Objeto que será enviado para a API
+    const corpoDaRequisicao = { 
+        nfNumero: nfNumeroEntrada, 
+        nfNumeroReferencia: nfNumeroSaida, 
+        dataEntrada, 
+        observacoes, 
+        radios 
+    };
 
-        const data = await res.json();
+    // ADICIONE ESTA LINHA ANTES DO FETCH PARA VER O QUE ESTÁ SENDO ENVIADO
+    console.log("DADOS ENVIADOS PARA A API:", JSON.stringify(corpoDaRequisicao, null, 2));
 
-        if (res.ok) {
-            showAlert('Sucesso!', data.message || 'Entrada registrada com sucesso.', 'success');
-            // Limpa o formulário e a lista para um novo registro
+    try {
+        const res = await fetch(`${API_BASE_URL}/notasfiscais/entrada`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(corpoDaRequisicao)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showAlert('Sucesso!', data.message || 'Entrada registrada com sucesso.', 'success');
             document.getElementById('formEntrada').reset();
             document.getElementById('listaRadiosParaRetorno').innerHTML = '';
             document.getElementById('dataEntrada').valueAsDate = new Date();
-        } else {
-            showAlert('Erro ao Registrar', data.message || 'Erro desconhecido.', 'danger');
-        }
-    } catch (error) {
-        console.error('Erro na requisição de entrada:', error);
-        showAlert('Erro de Conexão', 'Não foi possível conectar ao servidor.', 'danger');
-    } finally {
+        } else {
+            showAlert('Erro ao Registrar', data.message || 'Erro desconhecido.', 'danger');
+        }
+    } catch (error) {
+        console.error('Erro na requisição de entrada:', error);
+        showAlert('Erro de Conexão', 'Não foi possível conectar ao servidor.', 'danger');
+    } finally {
         btnSubmit.disabled = false;
         btnSubmit.textContent = 'Registrar Entrada';
-    }
+    }
 }

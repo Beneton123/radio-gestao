@@ -10,7 +10,7 @@ const notaFiscalSchema = new mongoose.Schema({
     dataEntrada: { type: Date }, // Para NFs de Entrada (data real do retorno)
     radios: [{ type: String, required: true }], // Array de numeroSerie dos rádios
     radiosRetornados: [{ type: String }], // Para NFs de Saída: quais rádios já retornaram
-    observacoes: { type: String },
+   observacoes: [{ type: String }],
     usuarioRegistro: { type: String, required: true }, // Quem registrou a NF
     tipoLocacao: { type: String, enum: ['Mensal', 'Anual'] }, // Para NFs de Saída
     nfNumeroReferencia: { // NOVO CAMPO: Para vincular NFs de Entrada a uma NF de Saída original

@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Movimentações - RadioScan</title> 
+    <title>Dashboard - RadioScan</title> 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-light">
 
     <div class="sidebar" id="sidebar">
         <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" class="logo" style="height: 67.5px; width: 100%;">
-        <a href="index.html" class="active">🏠 Início</a>
+        <a href="index.html" class="active" id="inicio-link">🏠 Início</a>
         <a href="registrar.html">➕ Cadastrar Rádio</a>
         <a href="excluir.html">❌ Excluir Rádio</a>
         <a href="estoque.html">📦 Estoque</a>
@@ -20,31 +22,69 @@
         <a href="saida.html">📤 NF de Saída</a>
         <a href="entrada.html">📥 Retorno de Locação</a>
         <a href="extrato.html">📄 Extrato de NF</a>
+        <a href="gerenciar-nf.html">🧾 Gerenciar NF</a>
         <a href="historico.html">📚 Histórico de Rádio</a>
+        <a href="admin.html">⚙️ Painel Admin</a>
         <a href="#" id="logout-link">🚪 Sair</a>
     </div>
 
+    <div class="content">
 
-
-    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header" id="customAlertModalHeader">
-                    <h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        <div id="inicio-pane">
+            <div class="main-card mt-4">
+                <div class="card-title-embedded">MOVIMENTAÇÕES RECENTES</div>
+                <div class="pt-4 row g-3">
+                    <div class="col-md-6">
+                        <input type="text" id="filtroNF" class="form-control" placeholder="Filtrar por N° da NF...">
+                    </div>
+                    <div class="col-md-6">
+                        <input type="date" id="filtroData" class="form-control">
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <p id="customAlertMessage"></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped" id="tabela-movimentacoes">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Nº da NF</th>
+                                <th>Usuário</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+
+        <div id="gerenciar-nf-pane" style="display: none;">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Gerenciamento de Notas Fiscais</h1>
+            </div>
+            <div class="card bg-light border-0 mb-4">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4"><label for="filtroNfTexto" class="form-label">Pesquisa Rápida</label><input type="text" id="filtroNfTexto" class="form-control" placeholder="Buscar por NF, Cliente..."></div>
+                        <div class="col-md-2"><label for="filtroNfStatus" class="form-label">Status</label><select id="filtroNfStatus" class="form-select"><option value="Todos" selected>Todos</option><option value="Aberta">Em Aberto</option><option value="Finalizada">Finalizadas</option></select></div>
+                        <div class="col-md-4"><label class="form-label">Filtrar por Data de Criação</label><div class="input-group"><input type="date" id="filtroNfDataInicio" class="form-control"><span class="input-group-text">até</span><input type="date" id="filtroNfDataFim" class="form-control"></div></div>
+                        <div class="col-md-2"><button class="btn btn-outline-secondary w-100" id="btnLimparFiltrosNf">Limpar Filtros</button></div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th scope="col">Número NF</th><th scope="col">Tipo</th><th scope="col">Cliente</th><th scope="col">Data</th><th scope="col">Status</th><th scope="col">Rádios</th><th scope="col">Ações</th></tr></thead><tbody id="tabelaNotasFiscais"></tbody></table></div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header" id="customAlertModalHeader"><h5 class="modal-title" id="customAlertModalLabel">Atenção!</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p id="customAlertMessage"></p></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button></div></div></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/index.js"></script> </body>
+    <script src="js/index.js"></script> 
+    <script src="js/gerenciar-nf.js"></script>
+</body>
 </html>

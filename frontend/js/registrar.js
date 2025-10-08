@@ -8,7 +8,7 @@ let modalAdicionarModeloInstance = null;
 document.addEventListener('DOMContentLoaded', () => {
     try {
         // Verifica se o usuário tem permissão para registrar rádios
-        checkAuthentication('registrar_radio'); 
+        checkAuthentication('registrar'); 
 
         // Inicializa a instância do modal de adicionar modelo
         const modalEl = document.getElementById('modalAdicionarModelo');

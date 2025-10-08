@@ -5,8 +5,15 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const { autenticarToken, autorizarAdmin } = require('../middleware/authMiddleware');
 
+// Rotas existentes
 router.post('/', autenticarToken, autorizarAdmin, userController.createUser);
 router.get('/', autenticarToken, autorizarAdmin, userController.getAllUsers);
-router.delete('/:email', autenticarToken, autorizarAdmin, userController.deleteUser);
+
+// Rota de atualização (NOVA)
+router.put('/:id', autenticarToken, autorizarAdmin, userController.updateUser);
+
+// Rota de exclusão (ALTERADA para usar ID)
+router.delete('/:id', autenticarToken, autorizarAdmin, userController.deleteUser);
+
 
 module.exports = router;

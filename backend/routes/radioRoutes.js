@@ -4,7 +4,7 @@ const radioController = require('../controllers/radioController');
 const { autenticarToken, autorizarAdmin, temPermissao } = require('../middleware/authMiddleware');
 
 // Rota para cadastrar um novo rádio
-router.post('/', autenticarToken, temPermissao('registrar_radio'), radioController.createRadio);
+router.post('/', autenticarToken, temPermissao('registrar'), radioController.createRadio);
 
 // Rota para buscar todos os rádios ativos
 router.get('/', autenticarToken, radioController.getAllRadios);

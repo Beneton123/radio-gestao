@@ -156,3 +156,8 @@ body {
 #customAlertModal {
   z-index: 1060;
 }
+
+.nf-finalizada {
+    /* Um tom de vermelho um pouco mais sóbrio */
+    background-color: rgba(190, 40, 40, 0.3) !important;
+}

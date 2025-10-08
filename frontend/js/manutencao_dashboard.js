@@ -1,22 +1,21 @@
 // frontend/js/manutencao_dashboard.js
 
-// Variáveis globais
+// --- VARIÁVEIS GLOBAIS ---
 let modalTecnicoInstance = null;
 let modalInputObservacoesTecnicasInstance = null;
 let modalConfirmationInstance = null;
-let modalDarBaixaInstance = null;
-let modalTransferirRadioInstance = null;
-let modalCondenarRadioInstance = null; // ADICIONADO
+let modalCondenarRadioInstance = null;
+let modalInserirOSInstance = null; 
 let todosItensEstoqueManutencao = [];
 let todosPedidosHistorico = [];
-
-// Variáveis para o modal de confirmação
+let todosPedidosEmAndamento = [];
 let confirmationCallback = null;
 let isConfirmed = false;
 
+// --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        checkAuthentication('gerenciar_manutencao');
+        checkAuthentication('manutencao_dashboard');
         carregarPedidosAbertos();
 
         const manutencaoTabs = document.getElementById('manutencaoTabs');
@@ -31,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-        
+
         const setupModalHeader = (modalEl) => {
             const header = modalEl?.querySelector('.modal-header');
             if (header) {
@@ -40,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        // Modal de Técnico
         const modalTecnicoEl = document.getElementById('modalSelecionarTecnico');
         if (modalTecnicoEl) {
             modalTecnicoInstance = new bootstrap.Modal(modalTecnicoEl);
@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('btnConfirmarIniciarManutencaoComTecnico')?.addEventListener('click', handleConfirmarIniciarManutencaoComTecnico);
         }
 
+        // Modal de Observações
         const modalInputObsTecEl = document.getElementById('modalInputObservacoesTecnicas');
         if (modalInputObsTecEl) {
             modalInputObservacoesTecnicasInstance = new bootstrap.Modal(modalInputObsTecEl);
@@ -57,50 +58,48 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('btnConfirmarInputObservacoesTecnicas')?.addEventListener('click', handleConfirmarObservacoesTecnicas);
         }
 
+        // Modal de Confirmação Genérico
         const modalConfirmationEl = document.getElementById('modalConfirmation');
         if (modalConfirmationEl) {
             modalConfirmationInstance = new bootstrap.Modal(modalConfirmationEl);
             setupModalHeader(modalConfirmationEl);
-            
             document.getElementById('btnConfirmAction')?.addEventListener('click', () => {
                 isConfirmed = true;
                 if (confirmationCallback) confirmationCallback(true);
                 modalConfirmationInstance.hide();
             });
-
             modalConfirmationEl.addEventListener('hidden.bs.modal', () => {
-                if (!isConfirmed && confirmationCallback) {
-                    confirmationCallback(false);
-                }
+                if (!isConfirmed && confirmationCallback) confirmationCallback(false);
                 isConfirmed = false;
                 confirmationCallback = null;
             });
         }
-        
-        
-        
-        // NOVO MODAL DE CONDENAR
+
+        // Modal de Condenar
         const modalCondenarEl = document.getElementById('modalCondenarRadio');
         if (modalCondenarEl) {
             modalCondenarRadioInstance = new bootstrap.Modal(modalCondenarEl);
             setupModalHeader(modalCondenarEl);
             document.getElementById('btnConfirmarCondenacao')?.addEventListener('click', handleConfirmarCondenacao);
         }
-        
-        // Listener para o seletor de destino no modal de transferência
-        document.querySelectorAll('input[name="tipoDestino"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                document.getElementById('campoOsExistente').style.display = this.value === 'existente' ? 'block' : 'none';
-            });
-        });
+
+        // ADICIONADO: Inicializa o modal de Inserir OS
+        const modalInserirOSEl = document.getElementById('modalInserirOS');
+        if (modalInserirOSEl) {
+            modalInserirOSInstance = new bootstrap.Modal(modalInserirOSEl);
+            setupModalHeader(modalInserirOSEl);
+            document.getElementById('btnConfirmarDarAndamentoComOS')?.addEventListener('click', handleConfirmarDarAndamentoComOS);
+        }
         
         document.getElementById('filtroEstoqueManutencao')?.addEventListener('input', filtrarEstoqueManutencao);
         document.getElementById('filtroHistoricoManutencao')?.addEventListener('input', filtrarHistoricoManutencao);
+        document.getElementById('filtroPedidosEmAndamento')?.addEventListener('input', filtrarPedidosEmAndamento);
 
     } catch (error) {
         console.error("Erro na inicialização do Painel de Manutenção:", error);
     }
 });
+
 
 // --- FUNÇÕES GERAIS ---
 function showBootstrapConfirmation(title, message, callback) {
@@ -137,6 +136,7 @@ function formatStatusPedido(status) {
     return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
+
 // --- FUNÇÕES DE PEDIDOS ABERTOS ---
 async function carregarPedidosAbertos() {
     const tbody = document.querySelector('#tabelaPedidosAbertos tbody');
@@ -148,21 +148,32 @@ async function carregarPedidosAbertos() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error((await res.json()).message || 'Erro ao buscar pedidos.');
+        
         const pedidos = await res.json();
         tbody.innerHTML = '';
         if (pedidos.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma solicitação aberta.</td></tr>';
             return;
         }
+
         pedidos.forEach(pedido => {
             const tr = document.createElement('tr');
-            // CORREÇÃO: Trocamos 'pedido.radios.length' por '1' ou pelo número de série
-            const numeroSerie = pedido.radio ? pedido.radio.numeroSerie : 'N/A';
-            tr.innerHTML = `<td>${pedido.idPedido}</td><td>${pedido.solicitanteNome || ''}</td><td>${new Date(pedido.dataSolicitacao).toLocaleDateString('pt-BR')}</td><td><span class="badge bg-${getPrioridadeBadge(pedido.prioridade)}">${pedido.prioridade.toUpperCase()}</span></td><td>1</td><td><button class="btn btn-sm btn-info btn-ver-detalhes" data-id="${pedido.idPedido}"><i class="bi bi-eye"></i> Detalhes</button><button class="btn btn-sm btn-success ms-1 btn-dar-andamento" data-id="${pedido.idPedido}"><i class="bi bi-check-circle"></i> Dar Andamento</button></td>`;
+            tr.innerHTML = `
+                <td>${pedido.idPedido || '<i>Aguardando OS</i>'}</td>
+                <td>${pedido.solicitanteNome || ''}</td>
+                <td>${new Date(pedido.dataSolicitacao).toLocaleDateString('pt-BR')}</td>
+                <td><span class="badge bg-${getPrioridadeBadge(pedido.prioridade)}">${pedido.prioridade.toUpperCase()}</span></td>
+                <td>${Array.isArray(pedido.radios) ? pedido.radios.length : 1}</td>
+                <td>
+                    <button class="btn btn-sm btn-info btn-ver-detalhes" data-id="${pedido._id}"><i class="bi bi-eye"></i> Detalhes</button>
+                    <button class="btn btn-sm btn-success ms-1 btn-dar-andamento" data-id="${pedido._id}"><i class="bi bi-check-circle"></i> Dar Andamento</button>
+                </td>
+            `;
             tbody.appendChild(tr);
+
             const trDetalhes = document.createElement('tr');
             trDetalhes.className = 'detalhes-pedido d-none';
-            trDetalhes.id = `detalhes-${pedido.idPedido}`;
+            trDetalhes.id = `detalhes-${pedido._id}`;
             trDetalhes.innerHTML = `<td colspan="6"><div class="p-2">Carregando detalhes...</div></td>`;
             tbody.appendChild(trDetalhes);
         });
@@ -172,61 +183,87 @@ async function carregarPedidosAbertos() {
     }
 }
 
-function getPrioridadeBadge(prioridade) {
-    switch (prioridade?.toLowerCase()) {
-        case 'baixa': return 'secondary';
-        case 'media': return 'warning text-dark';
-        case 'alta': return 'danger';
-        case 'urgente': return 'danger fw-bold border border-white';
-        default: return 'light text-dark';
-    }
-}
-
 function addEventListenersPedidosAbertos() {
     document.querySelectorAll('#tabelaPedidosAbertos .btn-ver-detalhes').forEach(btn => {
         btn.addEventListener('click', function() {
-            const idPedido = this.dataset.id;
+            const id = this.dataset.id;
             const detalhesRow = this.closest('tr').nextElementSibling;
             if (detalhesRow) {
                 const isHidden = detalhesRow.classList.toggle('d-none');
                 if (!isHidden) {
-                    carregarDetalhesDoPedidoNaLinha(idPedido, detalhesRow.querySelector('td > div'));
+                    carregarDetalhesDoPedidoNaLinha(id, detalhesRow.querySelector('td > div'));
                 }
             }
         });
     });
+
     document.querySelectorAll('#tabelaPedidosAbertos .btn-dar-andamento').forEach(btn => {
-        btn.addEventListener('click', function() { confirmarDarAndamento(this.dataset.id); });
+        btn.addEventListener('click', function() {
+            abrirModalDarAndamento(this.dataset.id);
+        });
     });
 }
 
-function confirmarDarAndamento(idPedido) {
-    showBootstrapConfirmation('Confirmar Andamento', `Tem certeza que deseja dar andamento ao pedido ${idPedido}?`, async (confirmed) => {
-        if (!confirmed) return;
-        const btn = document.querySelector(`.btn-dar-andamento[data-id="${idPedido}"]`);
-        const originalHtml = btn.innerHTML;
+// NOVA FUNÇÃO
+function abrirModalDarAndamento(id) {
+    if (!modalInserirOSInstance) {
+        showAlert('Erro de Interface', 'Não foi possível abrir o modal para inserir a OS.', 'danger');
+        return;
+    }
+    document.getElementById('idPedidoParaDarAndamento').value = id;
+    document.getElementById('inputNumeroOS').value = '';
+    modalInserirOSInstance.show();
+}
+
+// NOVA FUNÇÃO
+async function handleConfirmarDarAndamentoComOS() {
+    const id = document.getElementById('idPedidoParaDarAndamento').value;
+    const numeroOS = document.getElementById('inputNumeroOS').value.trim();
+
+    if (!numeroOS) {
+        return showAlert('Campo Obrigatório', 'Você deve inserir um número para a Ordem de Serviço.', 'warning');
+    }
+
+    modalInserirOSInstance.hide();
+    
+    const btn = document.querySelector(`.btn-dar-andamento[data-id="${id}"]`);
+    const originalHtml = btn ? btn.innerHTML : '';
+    if (btn) {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/manutencao/solicitacoes/${idPedido}/dar-andamento`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error((await res.json()).message);
-            showAlert('Sucesso!', `Pedido ${idPedido} encaminhado para manutenção.`, 'success');
-            await carregarPedidosAbertos();
-            const tab = new bootstrap.Tab(document.getElementById('pedidos-andamento-tab'));
-            tab.show();
-        } catch (error) {
-            showAlert('Erro', error.message, 'danger');
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/manutencao/solicitacoes/${id}/dar-andamento`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ idPedido: numeroOS })
+        });
+
+        if (!res.ok) throw new Error((await res.json()).message);
+        
+        showAlert('Sucesso!', `Pedido ${numeroOS} encaminhado para manutenção.`, 'success');
+        await carregarPedidosAbertos();
+        
+        const tab = new bootstrap.Tab(document.getElementById('pedidos-andamento-tab'));
+        tab.show();
+
+    } catch (error) {
+        showAlert('Erro', error.message, 'danger');
+    } finally {
+        if (btn) {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
-    });
+    }
 }
 
 
+// --- FUNÇÕES DE PEDIDOS EM ANDAMENTO ---
 
 async function carregarPedidosEmAndamento() {
     const tbody = document.querySelector('#tabelaPedidosEmAndamento tbody');
@@ -236,66 +273,84 @@ async function carregarPedidosEmAndamento() {
         const token = localStorage.getItem('token');
         const res = await fetch(`/api/manutencao/solicitacoes?status=aguardando_manutencao,em_manutencao`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (!res.ok) throw new Error((await res.json()).message);
-        const pedidos = await res.json();
-        tbody.innerHTML = '';
-        if (pedidos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum pedido em processo de manutenção.</td></tr>';
-            return;
-        }
-        pedidos.forEach(pedido => {
-            const tr = document.createElement('tr');
-            let acoesHtml = '';
-            if (pedido.statusPedido === 'aguardando_manutencao') {
-                acoesHtml = `<button class="btn btn-sm btn-warning btn-iniciar-manutencao" data-id="${pedido.idPedido}"><i class="bi bi-tools"></i> Iniciar</button>`;
-            } else if (pedido.statusPedido === 'em_manutencao') {
-                acoesHtml = `<button class="btn btn-sm btn-primary btn-concluir-manutencao" data-id="${pedido.idPedido}"><i class="bi bi-check2-square"></i> Concluir OS</button>`;
-            }
-            tr.innerHTML = `<td>${pedido.idPedido}</td><td>${pedido.solicitanteNome}</td><td>${new Date(pedido.dataSolicitacao).toLocaleDateString('pt-BR')}</td><td><span class="badge bg-${getStatusPedidoBadge(pedido.statusPedido)}">${formatStatusPedido(pedido.statusPedido)}</span></td><td>${pedido.tecnicoResponsavel || '-'}</td><td><button class="btn btn-sm btn-info btn-ver-detalhes-andamento" data-id="${pedido.idPedido}"><i class="bi bi-eye"></i> Detalhes</button> ${acoesHtml}</td>`;
-            tbody.appendChild(tr);
-            const trDetalhes = document.createElement('tr');
-            trDetalhes.className = 'detalhes-pedido d-none';
-            trDetalhes.id = `detalhes-andamento-${pedido.idPedido}`;
-            trDetalhes.innerHTML = `<td colspan="6"><div class="p-2">Carregando...</div></td>`;
-            tbody.appendChild(trDetalhes);
-        });
-        addEventListenersPedidosEmAndamento();
+        
+        // Guarda os dados na variável global
+        todosPedidosEmAndamento = await res.json();
+        
+        // Chama a nova função para renderizar na tela
+        renderizarPedidosEmAndamento(todosPedidosEmAndamento);
+        
     } catch (error) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`;
     }
 }
 
-// Arquivo: frontend/js/manutencao_dashboard.js
-// AÇÃO: Substitua a função inteira por esta versão
-
-function addEventListenersPedidosEmAndamento() {
-    // Listener para o botão 'Detalhes' (já existia)
-    document.querySelectorAll('#tabelaPedidosEmAndamento .btn-ver-detalhes-andamento').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const idPedido = this.dataset.id;
-            const detalhesRow = this.closest('tr').nextElementSibling;
-            if (detalhesRow) {
-                const isHidden = detalhesRow.classList.toggle('d-none');
-                if (!isHidden) {
-                    carregarDetalhesDoPedidoNaLinha(idPedido, detalhesRow.querySelector('td > div'));
-                }
-            }
-        });
+// ADICIONE ESTA FUNÇÃO
+function renderizarPedidosEmAndamento(pedidos) {
+    const tbody = document.querySelector('#tabelaPedidosEmAndamento tbody');
+    tbody.innerHTML = '';
+    if (pedidos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum pedido em processo de manutenção.</td></tr>';
+        return;
+    }
+    pedidos.forEach(pedido => {
+        const tr = document.createElement('tr');
+        let acoesHtml = '';
+        const id = pedido.idPedido || pedido._id; // Garante que temos um ID
+        if (pedido.statusPedido === 'aguardando_manutencao') {
+            acoesHtml = `<button class="btn btn-sm btn-warning btn-iniciar-manutencao" data-id="${id}"><i class="bi bi-tools"></i> Iniciar</button>`;
+        } else if (pedido.statusPedido === 'em_manutencao') {
+            acoesHtml = `<button class="btn btn-sm btn-primary btn-concluir-manutencao" data-id="${id}"><i class="bi bi-check2-square"></i> Concluir OS</button>`;
+        }
+        tr.innerHTML = `<td>${pedido.idPedido}</td><td>${pedido.solicitanteNome}</td><td>${new Date(pedido.dataSolicitacao).toLocaleDateString('pt-BR')}</td><td><span class="badge bg-${getStatusPedidoBadge(pedido.statusPedido)}">${formatStatusPedido(pedido.statusPedido)}</span></td><td>${pedido.tecnicoResponsavel || '-'}</td><td><button class="btn btn-sm btn-info btn-ver-detalhes-andamento" data-id="${id}"><i class="bi bi-eye"></i> Detalhes</button> ${acoesHtml}</td>`;
+        tbody.appendChild(tr);
+        const trDetalhes = document.createElement('tr');
+        trDetalhes.className = 'detalhes-pedido d-none';
+        trDetalhes.id = `detalhes-andamento-${id}`;
+        trDetalhes.innerHTML = `<td colspan="6"><div class="p-2">Carregando...</div></td>`;
+        tbody.appendChild(trDetalhes);
     });
-
-    // Listener para o botão 'Iniciar' (já existia)
-    document.querySelectorAll('#tabelaPedidosEmAndamento .btn-iniciar-manutencao').forEach(btn => {
-        btn.addEventListener('click', function() { abrirModalSelecionarTecnico(this.dataset.id); });
-    });
-
-    // PARTE FALTANTE ADICIONADA AQUI
-    // Listener para o botão 'Concluir OS'
-    document.querySelectorAll('#tabelaPedidosEmAndamento .btn-concluir-manutencao').forEach(btn => {
-        btn.addEventListener('click', function() { 
-            abrirModalConcluirManutencao(this.dataset.id); 
-        });
-    });
+    addEventListenersPedidosEmAndamento();
 }
 
+// ADICIONE ESTA FUNÇÃO
+function filtrarPedidosEmAndamento() {
+    const termo = document.getElementById('filtroPedidosEmAndamento').value.toLowerCase();
+    if (!todosPedidosEmAndamento) return;
+
+    const filtrados = todosPedidosEmAndamento.filter(pedido => {
+        return (pedido.idPedido?.toLowerCase().includes(termo) ||
+                pedido.solicitanteNome?.toLowerCase().includes(termo) ||
+                pedido.tecnicoResponsavel?.toLowerCase().includes(termo));
+    });
+    renderizarPedidosEmAndamento(filtrados);
+}
+
+
+function addEventListenersPedidosEmAndamento() {
+    document.querySelectorAll('#tabelaPedidosEmAndamento .btn-ver-detalhes-andamento').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const idPedido = this.dataset.id;
+            const detalhesRow = this.closest('tr').nextElementSibling;
+            if (detalhesRow) {
+                const isHidden = detalhesRow.classList.toggle('d-none');
+                if (!isHidden) {
+                    carregarDetalhesDoPedidoNaLinha(idPedido, detalhesRow.querySelector('td > div'));
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('#tabelaPedidosEmAndamento .btn-iniciar-manutencao').forEach(btn => {
+        btn.addEventListener('click', function() { abrirModalSelecionarTecnico(this.dataset.id); });
+    });
+
+    document.querySelectorAll('#tabelaPedidosEmAndamento .btn-concluir-manutencao').forEach(btn => {
+        btn.addEventListener('click', function() { 
+            abrirModalConcluirManutencao(this.dataset.id); 
+        });
+    });
+}
 function abrirModalSelecionarTecnico(idPedido) {
     document.getElementById('idPedidoParaIniciarManutencao').value = idPedido;
     document.getElementById('selectTecnico').value = '';
@@ -593,42 +648,52 @@ function abrirModalCondenar(idPedido, radioSubId, numeroSerie) {
 // Arquivo: frontend/js/manutencao_dashboard.js
 // AÇÃO: Substitua a função inteira por esta versão
 
-async function carregarDetalhesDoPedidoNaLinha(idPedido, divElement) {
+async function carregarDetalhesDoPedidoNaLinha(id, divElement) {
     divElement.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm"></span> Carregando...</div>';
     try {
-        const pedido = await buscarDetalhesPedidoAPI(idPedido);
-        const radio = pedido.radio;
+        const pedido = await buscarDetalhesPedidoAPI(id);
+        const radios = Array.isArray(pedido.radios) ? pedido.radios : [pedido.radio]; // Lida com ambos os formatos
+
         const dataSolicitacao = formatarDataHora(pedido.dataSolicitacao);
         const dataInicio = formatarDataHora(pedido.dataInicioManutencao);
 
-        let acoesHtml = '';
-        const isFinalizado = pedido.statusPedido === 'finalizado' || pedido.statusPedido === 'cancelado';
-        const isRadioTratado = radio.status === 'Concluído' || radio.status === 'Condenado';
+        let radiosHtml = radios.map(radio => {
+            if (!radio) return '';
+            const isFinalizado = pedido.statusPedido === 'finalizado' || pedido.statusPedido === 'cancelado';
+            const isRadioTratado = radio.status === 'Concluído' || radio.status === 'Condenado';
+            let acoesHtml = '';
+            const dataId = pedido.idPedido || pedido._id;
 
-        if (!isFinalizado && !isRadioTratado) {
-            acoesHtml = `
-
-                <button class="btn btn-dark btn-sm py-0 ms-1 btn-condenar-radio" data-id-pedido="${pedido.idPedido}" data-radio-sub-id="${radio._id}" data-numero-serie="${radio.numeroSerie}">Condenar</button>
+            if (!isFinalizado && !isRadioTratado) {
+                acoesHtml = `
+            
+                    <button class="btn btn-dark btn-sm py-0 ms-1 btn-condenar-radio" data-id-pedido="${dataId}" data-radio-sub-id="${radio._id}" data-numero-serie="${radio.numeroSerie}">Condenar</button>
+                `;
+            } else {
+                const statusBadgeClass = radio.status === 'Concluído' ? 'success' : (radio.status === 'Condenado' ? 'dark' : 'secondary');
+                acoesHtml = `<span class="badge bg-${statusBadgeClass}">${radio.status}</span>`;
+            }
+            return `
+                <li class="list-group-item">
+                    <div class="row">
+                        <div class="col-md-3"><strong>Nº Série:</strong> ${radio.numeroSerie}</div>
+                        <div class="col-md-3"><strong>Modelo:</strong> ${radio.modelo}</div>
+                        <div class="col-md-4"><strong>Defeito:</strong> ${radio.descricaoProblema}</div>
+                        <div class="col-md-2 text-end">${acoesHtml}</div>
+                    </div>
+                </li>
             `;
-        } else {
-            const statusBadgeClass = radio.status === 'Concluído' ? 'success' : (radio.status === 'Condenado' ? 'dark' : 'secondary');
-            acoesHtml = `<span class="badge bg-${statusBadgeClass}">${radio.status}</span>`;
-        }
+        }).join('');
 
         let detalhesHtml = `
             <div class="container-fluid">
                 <div class="row mb-3">
-                    <div class="col-md-4"><p class="mb-1"><strong>ID Ordem de Serviço:</strong> ${pedido.idPedido}</p><p class="mb-1"><strong>Solicitante:</strong> ${pedido.solicitanteNome}</p></div>
+                    <div class="col-md-4"><p class="mb-1"><strong>ID Ordem de Serviço:</strong> ${pedido.idPedido || 'N/A'}</p><p class="mb-1"><strong>Solicitante:</strong> ${pedido.solicitanteNome}</p></div>
                     <div class="col-md-4"><p class="mb-1"><strong>Data da Solicitação:</strong> ${dataSolicitacao.data} às ${dataSolicitacao.hora}</p>${pedido.dataInicioManutencao ? `<p class="mb-1"><strong>Início da Manutenção:</strong> ${dataInicio.data} às ${dataInicio.hora}</p>` : ''}</div>
                     <div class="col-md-4">${pedido.tecnicoResponsavel ? `<p class="mb-1"><strong>Técnico Responsável:</strong> ${pedido.tecnicoResponsavel}</p>` : ''}</div>
                 </div>
-                <h6>Rádio na Ordem de Serviço:</h6>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Nº de Série:</strong> ${radio.numeroSerie}</li>
-                    <li class="list-group-item"><strong>Modelo:</strong> ${radio.modelo}</li>
-                    <li class="list-group-item"><strong>Defeito Relatado:</strong> ${radio.descricaoProblema}</li>
-                    <li class="list-group-item"><strong>Ações:</strong> ${acoesHtml}</li>
-                </ul>
+                <h6>Rádios na Ordem de Serviço:</h6>
+                <ul class="list-group list-group-flush">${radiosHtml}</ul>
             </div>`;
         divElement.innerHTML = detalhesHtml;
         adicionarEventListenersDetalhesOS(divElement);
@@ -900,5 +965,62 @@ async function atualizarStatusRadioAPI(idPedido, radioSubId, status, motivoConde
         await carregarPedidosEmAndamento();
     } catch (error) {
         showAlert('Erro ao Atualizar Status', error.message, 'danger');
+    }
+}
+
+function abrirModalDarAndamento(id) {
+    if (!modalInserirOSInstance) {
+        showAlert('Erro de Interface', 'Não foi possível abrir o modal para inserir a OS.', 'danger');
+        return;
+    }
+    document.getElementById('idPedidoParaDarAndamento').value = id;
+    document.getElementById('inputNumeroOS').value = '';
+    modalInserirOSInstance.show();
+}
+
+// NOVA
+async function handleConfirmarDarAndamentoComOS() {
+    const id = document.getElementById('idPedidoParaDarAndamento').value;
+    const numeroOS = document.getElementById('inputNumeroOS').value.trim();
+
+    if (!numeroOS) {
+        return showAlert('Campo Obrigatório', 'Você deve inserir um número para a Ordem de Serviço.', 'warning');
+    }
+
+    modalInserirOSInstance.hide();
+    
+    const btn = document.querySelector(`.btn-dar-andamento[data-id="${id}"]`);
+    const originalHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/manutencao/solicitacoes/${id}/dar-andamento`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ idPedido: numeroOS })
+        });
+
+        if (!res.ok) throw new Error((await res.json()).message);
+        
+        showAlert('Sucesso!', `Pedido ${numeroOS} encaminhado para manutenção.`, 'success');
+        await carregarPedidosAbertos();
+        
+        const tab = new bootstrap.Tab(document.getElementById('pedidos-andamento-tab'));
+        tab.show();
+
+    } catch (error) {
+        showAlert('Erro', error.message, 'danger');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
     }
 }

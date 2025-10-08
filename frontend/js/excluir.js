@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Assume que checkAuthentication e showAlert estão disponíveis globalmente (vindo de auth.js/ui.js)
     if (typeof checkAuthentication === 'function') {
         // Redireciona ou bloqueia se não autenticado/autorizado.
-        checkAuthentication('admin'); 
+        checkAuthentication('excluir'); 
     } else {
         console.warn("Função 'checkAuthentication' não encontrada. Verifique se 'auth.js' está carregado.");
     }

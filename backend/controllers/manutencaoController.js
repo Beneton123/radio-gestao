@@ -1,21 +1,12 @@
-// SUBSTITUA TODO O CONTEÚDO DO ARQUIVO POR ESTE CÓDIGO
 const PedidoManutencao = require('../models/PedidoManutencao');
 const Radio = require('../models/Radio');
-const Counter = require('../models/Counter');
 const mongoose = require('mongoose');
 
-async function getNextSequenceValue(sequenceName) {
-    const sequenceDocument = await Counter.findOneAndUpdate(
-        { _id: sequenceName },
-        { $inc: { sequence_value: 1 } },
-        { new: true, upsert: true }
-    );
-    return sequenceDocument.sequence_value;
-}
-
-// Função auxiliar foi ajustada para receber a sessão do mongoose (transação)
+// Função auxiliar ajustada para "radios" (plural)
 async function finalizarOsSeNecessario(pedido, session) {
-    const radioTratado = ['Concluído', 'Condenado'].includes(pedido.radio.status);
+    // CORRIGIDO: Acessa o primeiro rádio no array
+    const radioNoPedido = pedido.radios[0];
+    const radioTratado = ['Concluído', 'Condenado'].includes(radioNoPedido.status);
 
     if (radioTratado) {
         pedido.statusPedido = 'finalizado';
@@ -25,7 +16,6 @@ async function finalizarOsSeNecessario(pedido, session) {
         await pedido.save({ session });
     }
 }
-
 
 exports.createSolicitacao = async (req, res) => {
     try {
@@ -38,32 +28,27 @@ exports.createSolicitacao = async (req, res) => {
         for (const r of radios) {
             const radioNoEstoque = await Radio.findOne({ numeroSerie: r.numeroSerie, ativo: true });
             if (!radioNoEstoque) {
-                console.error(`Rádio ${r.numeroSerie} não encontrado, pulando...`);
+                console.warn(`Rádio ${r.numeroSerie} não encontrado no estoque, será pulado.`);
                 continue;
             }
             if (['Manutenção', 'Condenado'].includes(radioNoEstoque.status)) {
-                console.error(`Rádio ${r.numeroSerie} já em manutenção ou condenado, pulando...`);
+                console.warn(`Rádio ${r.numeroSerie} já está em ${radioNoEstoque.status}, será pulado.`);
                 continue;
             }
-
-            radioNoEstoque.status = 'Manutenção';
-            await radioNoEstoque.save();
 
             const radioParaPedido = {
                 radioId: radioNoEstoque._id,
                 numeroSerie: radioNoEstoque.numeroSerie,
                 modelo: radioNoEstoque.modelo,
                 patrimonio: radioNoEstoque.patrimonio,
-                frequencia: radioNoEstoque.frequencia,
                 descricaoProblema: r.descricaoProblema,
                 status: 'Pendente'
             };
 
-            const idPedido = await getNextSequenceValue('pedidoId');
             const novoPedido = new PedidoManutencao({
-                idPedido: `PE${String(idPedido).padStart(6, '0')}`,
                 prioridade,
-                radio: radioParaPedido,
+                // CORRIGIDO: Salva em 'radios' (plural) e como um array
+                radios: [radioParaPedido], 
                 solicitanteNome: req.usuario.nome,
                 solicitanteEmail: req.usuario.email,
                 statusPedido: 'aberto',
@@ -74,6 +59,10 @@ exports.createSolicitacao = async (req, res) => {
             pedidosCriados.push(novoPedido);
         }
 
+        if (pedidosCriados.length === 0) {
+            return res.status(400).json({ message: 'Nenhum dos rádios fornecidos era válido para criar uma solicitação.' });
+        }
+
         res.status(201).json({ message: `${pedidosCriados.length} Ordem(ns) de Serviço criada(s) com sucesso!`, pedidos: pedidosCriados });
 
     } catch (error) {
@@ -82,26 +71,17 @@ exports.createSolicitacao = async (req, res) => {
     }
 };
 
-exports.getManutencaoHistory = async (req, res) => {
-    try {
-        const manutencoesHistorico = await PedidoManutencao.find({ statusPedido: 'finalizado' }).sort({ dataFimManutencao: -1 });
-        res.json(manutencoesHistorico);
-    } catch (error) {
-        console.error('Erro ao buscar histórico de manutenções:', error);
-        res.status(500).json({ message: 'Erro interno do servidor ao buscar histórico.' });
-    }
-};
-
 exports.getAllSolicitacoes = async (req, res) => {
     try {
         let query = {};
-        if (!req.usuario.permissoes.includes('gerenciar_manutencao') && !req.usuario.permissoes.includes('admin')) {
+        if (!req.usuario.permissoes.includes('manutencao_dashboard') && !req.usuario.permissoes.includes('admin')) {
             query.solicitanteEmail = req.usuario.email;
         }
         if (req.query.status) {
             query.statusPedido = { $in: req.query.status.split(',') };
         }
-        const solicitacoes = await PedidoManutencao.find(query).sort({ dataSolicitacao: -1 });
+        // CORRIGIDO: Popula os dados do rádio para exibição na lista
+        const solicitacoes = await PedidoManutencao.find(query).populate('radios.radioId').sort({ dataSolicitacao: -1 });
         res.json(solicitacoes);
     } catch (error) {
         console.error("Erro em getAllSolicitacoes:", error);
@@ -110,71 +90,82 @@ exports.getAllSolicitacoes = async (req, res) => {
 };
 
 exports.getSolicitacaoById = async (req, res) => {
-        console.log(`--- 4. BUSCANDO DETALHES PARA O PEDIDO: ${req.params.idPedido} ---`); // LOG 4
-
     try {
-        const { idPedido } = req.params;
-        const pedido = await PedidoManutencao.findOne({ idPedido })
-            .populate('radio.radioId')
-            .lean();
+        const { id } = req.params;
+        let query;
 
-        if (!pedido) return res.status(404).json({ message: 'Pedido não encontrado.' });
-        console.log('--- 5. DADOS VINDOS DO BANCO (ANTES DE MESCLAR):', JSON.stringify(pedido, null, 2)); // LOG 5
-
-        // **CORREÇÃO APLICADA AQUI**
-        // A ordem da mesclagem foi invertida para priorizar dados do estoque (mais recentes)
-        if (pedido.radio && pedido.radio.radioId) {
-            const dadosDoEstoque = pedido.radio.radioId;
-            pedido.radio = {
-                ...pedido.radio,    // Dados da OS (ex: descricaoProblema)
-                ...dadosDoEstoque,  // Dados do Estoque (ex: status atualizado)
-                _id: pedido.radio._id // Mantém o ID do subdocumento
-            };
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            query = { $or: [{ _id: id }, { idPedido: id }] };
+        } else {
+            query = { idPedido: id };
         }
-        console.log('--- 6. DADOS FINAIS ENVIADOS PARA O FRONTEND:', JSON.stringify(pedido, null, 2)); // LOG 6
 
-        res.json(pedido);
+        // CORRIGIDO: Garante que o populate usa o caminho correto 'radios.radioId'
+        const solicitacao = await PedidoManutencao.findOne(query).populate('radios.radioId');
+
+        if (!solicitacao) {
+            return res.status(404).json({ message: `Solicitação com ID "${id}" não encontrada.` });
+        }
+        res.status(200).json(solicitacao);
     } catch (error) {
-                console.error("--- ERRO DETALHADO EM 'getSolicitacaoById':", error); // LOG DE ERRO
-
-
-        res.status(500).json({ message: 'Erro interno ao buscar pedido.', error: error.message });
+        console.error("--- ERRO DETALHADO EM 'getSolicitacaoById':", error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
 
 exports.darAndamento = async (req, res) => {
-        console.log(`--- 1. INICIANDO 'darAndamento' PARA O PEDIDO: ${req.params.idPedido} ---`); // LOG 1
-
     try {
-        const { idPedido } = req.params;
-        const pedido = await PedidoManutencao.findOne({ idPedido });
-        if (!pedido) return res.status(404).json({ message: 'Pedido não encontrado.' });
-        if (pedido.statusPedido !== 'aberto') return res.status(400).json({ message: `O status do pedido é "${pedido.statusPedido}".` });
-console.log('--- 2. DADOS ANTES DE SALVAR:', { statusPedido: pedido.statusPedido, radioStatus: pedido.radio.status }); // LOG 2
-        // **CORREÇÃO APLICADA AQUI**
-        // Atualiza o status do rádio DENTRO do pedido e também na coleção principal.
+        const { id } = req.params;
+        const { idPedido: numeroOS } = req.body;
+
+        if (!numeroOS) {
+            return res.status(400).json({ message: 'O número da Ordem de Serviço (OS) é obrigatório.' });
+        }
+        const osExistente = await PedidoManutencao.findOne({ idPedido: numeroOS });
+        if (osExistente) {
+            return res.status(409).json({ message: `O número de OS "${numeroOS}" já está em uso.` });
+        }
+
+        // CORRIGIDO: Usa a query robusta para encontrar por _id ou idPedido
+        const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { idPedido: id };
+        const pedido = await PedidoManutencao.findOne(query).populate('radios.radioId');
+
+        if (!pedido) {
+            return res.status(404).json({ message: 'Pedido de manutenção não encontrado.' });
+        }
+        if (!pedido.radios || pedido.radios.length === 0 || !pedido.radios[0].radioId) {
+            return res.status(404).json({ message: 'Rádio associado a este pedido não foi encontrado.' });
+        }
+        if (pedido.statusPedido !== 'aberto') {
+            return res.status(400).json({ message: `O status do pedido já é "${pedido.statusPedido}".` });
+        }
+
+        pedido.idPedido = numeroOS;
         pedido.statusPedido = 'aguardando_manutencao';
-        pedido.radio.status = 'Manutenção'; // Atualiza o subdocumento
+        
+        const radioParaAtualizar = pedido.radios[0].radioId;
+        
+        await Radio.updateOne({ _id: radioParaAtualizar._id }, { $set: { status: 'Manutenção' } });
         await pedido.save();
-  console.log('--- 3. DADOS SALVOS NO BANCO COM SUCESSO! ---'); // LOG 3
-        await Radio.updateOne({ _id: pedido.radio.radioId }, { $set: { status: 'Manutenção' } });
 
-        res.status(200).json({ message: 'Status do pedido atualizado.', pedido });
+        res.status(200).json({ message: 'Status do pedido atualizado com sucesso.', pedido });
     } catch (error) {
-                console.error("--- ERRO DETALHADO EM 'darAndamento':", error); // LOG DE ERRO
-
-        console.error("Erro em darAndamento:", error);
+        console.error("Erro detalhado em darAndamento:", error); 
         res.status(500).json({ message: 'Erro interno do servidor.', error: error.message });
     }
 };
 
+// ... As outras funções (iniciar, concluir, etc.) também precisam de ajustes ...
+// Abaixo estão as versões corrigidas para as demais funções para garantir consistência.
+
 exports.iniciarManutencao = async (req, res) => {
     try {
-        const { idPedido } = req.params;
+        const { id } = req.params; 
         const { tecnicoResponsavel } = req.body;
         if (!tecnicoResponsavel) return res.status(400).json({ message: 'Técnico responsável é obrigatório.' });
         
-        const pedido = await PedidoManutencao.findOne({ idPedido, statusPedido: 'aguardando_manutencao' });
+        const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { idPedido: id };
+        const pedido = await PedidoManutencao.findOne({ ...query, statusPedido: 'aguardando_manutencao' });
         
         if (!pedido) return res.status(404).json({ message: 'Pedido não encontrado ou não está aguardando manutenção.' });
 
@@ -195,26 +186,32 @@ exports.concluirManutencao = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { idPedido } = req.params;
+        const { id } = req.params;
         const { observacoesTecnicas } = req.body;
-        const pedido = await PedidoManutencao.findOne({ idPedido }).session(session);
+        
+        const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { idPedido: id };
+        // CORRIGIDO: Adiciona o populate para ter acesso aos dados do rádio
+        const pedido = await PedidoManutencao.findOne(query).populate('radios.radioId').session(session);
+
         if (!pedido) {
-            return res.status(404).json({ message: 'Pedido não encontrado.' });
+            throw new Error('Pedido não encontrado.');
         }
 
-        // REGRA CORRIGIDA: Permite concluir se estiver aguardando OU em manutenção.
         if (!['aguardando_manutencao', 'em_manutencao'].includes(pedido.statusPedido)) {
-            return res.status(400).json({ message: `Este pedido não pode ser concluído pois seu status é "${pedido.statusPedido}".` });
+            throw new Error(`Este pedido não pode ser concluído pois seu status é "${pedido.statusPedido}".`);
         }
 
         pedido.statusPedido = 'finalizado';
         pedido.dataFimManutencao = new Date();
         pedido.observacoesTecnicas = observacoesTecnicas || 'Nenhuma observação técnica fornecida.';
         
-        // Se o rádio não foi condenado, ele é concluído e liberado no estoque.
-        if (pedido.radio && pedido.radio.status !== 'Condenado') {
-            pedido.radio.status = 'Concluído';
-            await Radio.updateOne({ _id: pedido.radio.radioId }, { $set: { status: 'Disponível' } }).session(session);
+        // CORRIGIDO: Acessa o rádio através do array 'radios'
+        const radioNoPedido = pedido.radios && pedido.radios.length > 0 ? pedido.radios[0] : null;
+
+        if (radioNoPedido && radioNoPedido.status !== 'Condenado') {
+            radioNoPedido.status = 'Concluído'; // Atualiza o status no subdocumento
+            // Atualiza o documento principal do Rádio para 'Disponível'
+            await Radio.updateOne({ _id: radioNoPedido.radioId._id }, { $set: { status: 'Disponível' } }).session(session);
         }
         
         await pedido.save({ session });
@@ -224,53 +221,65 @@ exports.concluirManutencao = async (req, res) => {
     } catch (error) {
         await session.abortTransaction();
         console.error("Erro em concluirManutencao:", error);
-        res.status(500).json({ message: 'Erro interno do servidor.', error: error.message });
+        res.status(500).json({ message: error.message || 'Erro interno do servidor.' });
     } finally {
         session.endSession();
     }
 };
 
-// AÇÃO: Substitua a função inteira no arquivo controllers/manutencaoController.js
-
+// Note que a lógica de `atualizarStatusRadio` e `getEstoqueManutencao` já estava usando a abordagem correta nos seus exemplos.
+// Mantive-as aqui para garantir que o arquivo esteja completo.
 exports.atualizarStatusRadio = async (req, res) => {
+    // Esta função parece complexa e pode precisar de uma revisão mais a fundo,
+    // mas o princípio de popular 'radios.radioId' e acessar 'pedido.radios[0]' se aplica.
+    // O código abaixo é uma tentativa de correção baseada nesse princípio.
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { idPedido, radioSubId } = req.params;
+        const { id, radioSubId } = req.params;
         const { status, motivoCondenacao } = req.body;
-        if (!['Concluído', 'Condenado'].includes(status)) return res.status(400).json({ message: 'Status inválido.' });
-        if (status === 'Condenado' && !motivoCondenacao) return res.status(400).json({ message: 'O motivo da condenação é obrigatório.' });
+        if (!['Concluído', 'Condenado'].includes(status)) {
+            return res.status(400).json({ message: 'Status inválido.' });
+        }
+        if (status === 'Condenado' && !motivoCondenacao) {
+            return res.status(400).json({ message: 'O motivo da condenação é obrigatório.' });
+        }
 
-        const pedido = await PedidoManutencao.findOne({ idPedido }).session(session);
+        const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { idPedido: id };
+        const pedido = await PedidoManutencao.findOne(query).session(session);
         if (!pedido) throw new Error('Pedido de manutenção não encontrado.');
 
-        const radioNoPedido = pedido.radio;
-        if (!radioNoPedido || radioNoPedido._id.toString() !== radioSubId) {
+        // CORRIGIDO: Acessa o rádio correto no array
+        const radioNoPedido = pedido.radios.find(r => r._id.toString() === radioSubId);
+        if (!radioNoPedido) {
             throw new Error('Rádio não encontrado neste pedido.');
         }
 
         radioNoPedido.status = status;
         
+        const radioPrincipalId = radioNoPedido.radioId;
+
         if (status === 'Concluído') {
-            await Radio.updateOne({ _id: radioNoPedido.radioId }, { $set: { status: 'Disponível' } }).session(session);
+            await Radio.updateOne({ _id: radioPrincipalId }, { $set: { status: 'Disponível' } }).session(session);
         } else if (status === 'Condenado') {
-            radioNoPedido.motivoCondenacao = motivoCondenacao;
-            radioNoPedido.dataCondenacao = new Date();
-            radioNoPedido.tecnicoCondenacao = req.usuario._id; // <-- CORREÇÃO #1
+            const updateFields = {
+                motivoCondenacao: motivoCondenacao,
+                dataCondenacao: new Date(),
+                tecnicoCondenacao: req.usuario._id
+            };
             
-            await Radio.updateOne({ _id: radioNoPedido.radioId }, {
+            await Radio.updateOne({ _id: radioPrincipalId }, {
                 $set: {
                     status: 'Condenado', 
                     ativo: false, 
-                    motivoCondenacao: motivoCondenacao,
-                    dataCondenacao: new Date(), 
-                    tecnicoCondenacao: req.usuario._id, // <-- CORREÇÃO #2
+                    ...updateFields,
                     osCondenacao: pedido._id 
                 }
             }).session(session);
         }
         
         await finalizarOsSeNecessario(pedido, session);
+        await pedido.save({ session }); // Salva as alterações no subdocumento
         
         await session.commitTransaction();
         res.status(200).json({ message: `Status do rádio ${radioNoPedido.numeroSerie} atualizado para ${status}.`, pedido });
@@ -288,10 +297,10 @@ exports.getEstoqueManutencao = async (req, res) => {
         const radiosEmManutencao = await Radio.find({ status: 'Manutenção', ativo: true }).lean();
         const estoqueDetalhado = await Promise.all(radiosEmManutencao.map(async (radio) => {
             const pedido = await PedidoManutencao.findOne({
-                'radio.radioId': radio._id,
+                // CORRIGIDO: O caminho da query deve corresponder ao schema
+                'radios.radioId': radio._id,
                 statusPedido: { $in: ['aberto', 'aguardando_manutencao', 'em_manutencao'] }
             })
-            .select('idPedido tecnicoResponsavel statusPedido')
             .sort({ dataSolicitacao: -1 })
             .lean();
             
@@ -302,4 +311,18 @@ exports.getEstoqueManutencao = async (req, res) => {
         console.error("Erro em getEstoqueManutencao:", error);
         res.status(500).json({ message: 'Erro interno do servidor.', error: error.message });
     }
+};
+
+exports.getManutencaoHistory = async (req, res) => {
+    try {
+        // Busca todos os pedidos que estão com status 'finalizado'
+        const manutencoesHistorico = await PedidoManutencao.find({ statusPedido: 'finalizado' })
+            .populate('radios.radioId') // Popula para mostrar detalhes do rádio
+            .sort({ dataFimManutencao: -1 });
+
+        res.json(manutencoesHistorico);
+    } catch (error) {
+        console.error('Erro ao buscar histórico de manutenções:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao buscar histórico.' });
+    }
 };

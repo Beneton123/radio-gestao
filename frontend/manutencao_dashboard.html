@@ -50,18 +50,26 @@
 </head>
 <body class="bg-light">
     <div class="sidebar" id="sidebar">
-        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo RadioScan" class="logo">
-        <a href="index.html">🏠 Início</a>
+        <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" class="logo" style="height: 67.5px; width: 100%;">
+        <a href="index.html" class="active">🏠 Início</a>
+        
         <a href="registrar.html">➕ Cadastrar Rádio</a>
         <a href="excluir.html">❌ Excluir Rádio</a>
         <a href="estoque.html">📦 Estoque</a>
+        
         <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
-        <a href="manutencao_dashboard.html" class="active">🔧 Manutenção</a>
+        <a href="manutencao_dashboard.html">🔧 Manutenção</a> 
+        
         <a href="saida.html">📤 NF de Saída</a>
         <a href="entrada.html">📥 Retorno de Locação</a>
         <a href="extrato.html">📄 Extrato de NF</a>
+
+        <a href="gerenciar-nf.html">🧾 Gerenciar NF</a>
+
         <a href="historico.html">📚 Histórico de Rádio</a>
-        <a href="admin.html">⚙️ Administração</a>
+
+        <a href="admin.html">⚙️ Painel Admin</a>
+
         <a href="#" id="logout-link">🚪 Sair</a>
     </div>
 
@@ -107,10 +115,18 @@
             </div>
 
             <div class="tab-pane fade" id="pedidos-andamento-pane" role="tabpanel" aria-labelledby="pedidos-andamento-tab" tabindex="0">
-                <div class="main-card">
-                    <div class="card-title-embedded">PEDIDOS AGUARDANDO OU EM MANUTENÇÃO</div>
-                    <div class="table-responsive pt-3">
-                        <table class="table table-hover table-pedidos" id="tabelaPedidosEmAndamento">
+    <div class="main-card">
+        <div class="card-title-embedded">PEDIDOS AGUARDANDO OU EM MANUTENÇÃO</div>
+
+        <div class="pt-3">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input type="text" id="filtroPedidosEmAndamento" class="form-control" placeholder="Buscar por ID Pedido, Solicitante, Técnico...">
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive pt-3">
+            <table class="table table-hover table-pedidos" id="tabelaPedidosEmAndamento">
                             <thead>
                                 <tr>
                                     <th>ID Pedido</th>
@@ -297,7 +313,6 @@
     </div>
 
     <div class="modal fade" id="modalTransferirRadio" tabindex="-1" aria-labelledby="modalTransferirRadioLabel" aria-hidden="true">
-       
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-custom-danger text-white">
@@ -340,6 +355,28 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="btnConfirmarTransferencia">Confirmar Transferência</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalInserirOS" tabindex="-1" aria-labelledby="modalInserirOSLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-custom-danger text-white">
+                    <h5 class="modal-title" id="modalInserirOSLabel">Dar Andamento - Inserir OS</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="idPedidoParaDarAndamento">
+                    <div class="mb-3">
+                        <label for="inputNumeroOS" class="form-label">Número da Ordem de Serviço (OS):</label>
+                        <input type="text" class="form-control" id="inputNumeroOS" placeholder="Digite o número da OS" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarDarAndamentoComOS">Confirmar</button>
                 </div>
             </div>
         </div>

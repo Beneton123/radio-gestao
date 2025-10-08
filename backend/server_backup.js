@@ -56,7 +56,7 @@ mongoose.connect(process.env.MONGODB_URI)
                 nome: 'Administrador',
                 email: adminEmail,
                 senha: hashedPassword,
-                permissoes: ['admin', 'registrar_radio', 'saida', 'entrada', 'solicitar_manutencao', 'gerenciar_manutencao', 'historico_radio', 'extrato_nf']
+                permissoes: ['admin', 'registrar', 'saida', 'entrada', 'solicitar_manutencao', 'manutencao_dashboard', 'historico', 'extrato']
             });
             console.log('Usuário administrador padrão criado.');
         }
@@ -246,7 +246,7 @@ app.post('/api/modelos', autenticarToken, autorizarAdmin, async (req, res) => {
 app.post('/radios', autenticarToken, async (req, res) => {
     try {
         // Verifica se o usuário tem a permissão 'registrar_radio' ou é 'admin'
-        if (!req.usuario.permissoes.includes('registrar_radio') && !req.usuario.permissoes.includes('admin')) {
+        if (!req.usuario.permissoes.includes('registrar') && !req.usuario.permissoes.includes('admin')) {
             return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para cadastrar rádios.' });
         }
 
@@ -885,7 +885,7 @@ app.get('/manutencao/solicitacoes', autenticarToken, async (req, res) => {
         let query = {};
 
         // Se o usuário não tem permissão de 'gerenciar_manutencao' ou 'admin', ele só vê os próprios pedidos
-        if (!req.usuario.permissoes.includes('gerenciar_manutencao') && !req.usuario.permissoes.includes('admin')) {
+        if (!req.usuario.permissoes.includes('manutencao_dashboard') && !req.usuario.permissoes.includes('admin')) {
             query.solicitanteEmail = req.usuario.email;
         }
 
@@ -911,7 +911,7 @@ app.get('/manutencao/solicitacoes/:idPedido', autenticarToken, async (req, res) 
         }
 
         // Verifica se o usuário tem permissão para visualizar este pedido
-        if (!req.usuario.permissoes.includes('gerenciar_manutencao') && !req.usuario.permissoes.includes('admin') && pedido.solicitanteEmail !== req.usuario.email) {
+        if (!req.usuario.permissoes.includes('manutencao_dashboard') && !req.usuario.permissoes.includes('admin') && pedido.solicitanteEmail !== req.usuario.email) {
             return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para visualizar este pedido.' });
         }
 
@@ -924,7 +924,7 @@ app.get('/manutencao/solicitacoes/:idPedido', autenticarToken, async (req, res) 
 app.post('/manutencao/pedidos/:idPedido/dar-andamento', autenticarToken, async (req, res) => {
     try {
         // Apenas usuários com permissão de gerenciamento ou admin podem dar andamento
-        if (!req.usuario.permissoes.includes('gerenciar_manutencao') && !req.usuario.permissoes.includes('admin')) {
+        if (!req.usuario.permissoes.includes('manutencao_dashboard') && !req.usuario.permissoes.includes('admin')) {
             return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para gerenciar pedidos de manutenção.' });
         }
 
@@ -960,7 +960,7 @@ app.post('/manutencao/pedidos/:idPedido/dar-andamento', autenticarToken, async (
 app.post('/manutencao/pedidos/:idPedido/iniciar', autenticarToken, async (req, res) => {
     try {
         // Apenas usuários com permissão de gerenciamento ou admin podem iniciar
-        if (!req.usuario.permissoes.includes('gerenciar_manutencao') && !req.usuario.permissoes.includes('admin')) {
+        if (!req.usuario.permissoes.includes('manutencao_dashboard') && !req.usuario.permissoes.includes('admin')) {
             return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para gerenciar pedidos de manutenção.' });
         }
 
@@ -995,7 +995,7 @@ app.post('/manutencao/pedidos/:idPedido/iniciar', autenticarToken, async (req, r
 app.post('/manutencao/pedidos/:idPedido/concluir', autenticarToken, async (req, res) => {
     try {
         // Apenas usuários com permissão de gerenciamento ou admin podem concluir
-        if (!req.usuario.permissoes.includes('gerenciar_manutencao') && !req.usuario.permissoes.includes('admin')) {
+        if (!req.usuario.permissoes.includes('manutencao_dashboard') && !req.usuario.permissoes.includes('admin')) {
             return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para gerenciar pedidos de manutenção.' });
         }
 
@@ -1034,7 +1034,7 @@ app.post('/manutencao/pedidos/:idPedido/concluir', autenticarToken, async (req, 
 app.get('/manutencao/estoque', autenticarToken, async (req, res) => {
     try {
         // Apenas usuários com permissão de gerenciamento ou admin podem ver o estoque de manutenção
-        if (!req.usuario.permissoes.includes('gerenciar_manutencao') && !req.usuario.permissoes.includes('admin')) {
+        if (!req.usuario.permissoes.includes('manutencao_dashboard') && !req.usuario.permissoes.includes('admin')) {
             return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para ver o estoque de manutenção.' });
         }
 

@@ -8,20 +8,22 @@ const radioEmManutencaoSchema = new mongoose.Schema({
     patrimonio: { type: String },
     descricaoProblema: { type: String, required: true },
     status: {
-    type: String,
-    default: 'Pendente',
-    enum: ['Pendente', 'Manutenção', 'Concluído', 'Condenado', 'Transferido'] 
-},
+        type: String,
+        default: 'Pendente',
+        enum: ['Pendente', 'Manutenção', 'Concluído', 'Condenado', 'Transferido'] 
+    },
     transferidoParaOS: { type: mongoose.Schema.Types.ObjectId, ref: 'PedidoManutencao', default: null }
-}, { _id: true }); // GARANTE QUE CADA RÁDIO TENHA UM ID ÚNICO
+}, { _id: true });
 
 const pedidoManutencaoSchema = new mongoose.Schema({
-    idPedido: { type: String, required: true, unique: true },
+    // ALTERADO: "required" foi removido e "sparse" foi adicionado
+    idPedido: { type: String, unique: true, sparse: true }, 
     solicitanteNome: { type: String, required: true },
     solicitanteEmail: { type: String, required: true },
     dataSolicitacao: { type: Date, default: Date.now },
     prioridade: { type: String, required: true, enum: ['baixa', 'media', 'alta', 'urgente'] },
-    radio: radioEmManutencaoSchema,
+    // ALTERADO: "radio" virou "radios" e agora é um array []
+    radios: [radioEmManutencaoSchema],
     statusPedido: { type: String, default: 'aberto', enum: ['aberto', 'aguardando_manutencao', 'em_manutencao', 'finalizado', 'cancelado'] },
     tecnicoResponsavel: { type: String, default: null },
     dataInicioManutencao: { type: Date, default: null },
