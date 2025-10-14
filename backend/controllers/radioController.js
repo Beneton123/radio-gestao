@@ -72,26 +72,29 @@ exports.createRadio = async (req, res) => {
 exports.deleteRadio = async (req, res) => {
     try {
         const { numeroSerie } = req.params;
-        const radioParaBaixar = await Radio.findOne({ numeroSerie: numeroSerie.toUpperCase(), ativo: true });
+        const numeroSerieUpper = numeroSerie.toUpperCase();
 
-        if (!radioParaBaixar) {
-            return res.status(404).json({ message: 'Rádio não encontrado ou já foi baixado.' });
+        // 1. Procura pelo rádio para verificar seu status antes de deletar
+        const radioParaDeletar = await Radio.findOne({ numeroSerie: numeroSerieUpper });
+
+        if (!radioParaDeletar) {
+            return res.status(404).json({ message: 'Rádio não encontrado no banco de dados.' });
         }
         
-        if (radioParaBaixar.status !== 'Disponível') {
-            return res.status(400).json({ message: `Não é possível baixar. O rádio está com status "${radioParaBaixar.status}".` });
+        // 2. REGRA DE SEGURANÇA: Impede a exclusão se o rádio não estiver 'Disponível'
+        // Isso evita apagar um rádio que está em uma NF de Saída ou em Manutenção.
+        if (radioParaDeletar.status !== 'Disponível') {
+            return res.status(400).json({ message: `Não é possível excluir. O rádio está com status "${radioParaDeletar.status}" e precisa ser retornado/liberado primeiro.` });
         }
 
-        radioParaBaixar.ativo = false;
-        radioParaBaixar.motivoBaixa = 'Exclusão/Baixa manual pelo painel de exclusão.';
-        radioParaBaixar.dataBaixa = new Date();
-        radioParaBaixar.usuarioBaixa = req.usuario.email;
-        await radioParaBaixar.save();
+        // 3. EXECUTA A EXCLUSÃO PERMANENTE
+        await Radio.deleteOne({ numeroSerie: numeroSerieUpper });
 
-        res.status(200).json({ message: 'Rádio baixado com sucesso.' });
+        res.status(200).json({ message: `Rádio com S/N ${numeroSerieUpper} foi excluído permanentemente.` });
+
     } catch (error) {
-        console.error('ERRO DETALHADO AO BAIXAR RÁDIO:', error);
-        res.status(500).json({ message: 'Erro interno ao baixar rádio.', error: error.message });
+        console.error('ERRO DETALHADO AO EXCLUIR RÁDIO:', error);
+        res.status(500).json({ message: 'Erro interno ao excluir rádio.', error: error.message });
     }
 };
 
@@ -107,10 +110,27 @@ exports.getAllRadios = async (req, res) => {
 
         if (status) query.status = status;
         if (nfAtual) query.nfAtual = nfAtual;
+        
         if (search) {
-            const searchRegex = new RegExp(search, 'i');
-            query.$or = [{ modelo: searchRegex }, { numeroSerie: searchRegex }, { patrimonio: searchRegex }];
+            // Se a busca terminar com '*', removemos o '*' e fazemos uma busca exata
+            if (search.endsWith('*')) {
+                const searchTermExact = search.slice(0, -1).toUpperCase(); // Remove o '*' e garante caixa alta
+                
+                query.$or = [
+                    { modelo: searchTermExact }, 
+                    { numeroSerie: searchTermExact }, 
+                    { patrimonio: searchTermExact }
+                ];
+            } else { // Senão, faz a busca parcial como antes (case-insensitive)
+                const searchRegex = new RegExp(search, 'i');
+                query.$or = [
+                    { modelo: searchRegex }, 
+                    { numeroSerie: searchRegex }, 
+                    { patrimonio: searchRegex }
+                ];
+            }
         }
+        
         const radios = await Radio.find(query);
         res.json(radios);
     } catch (error) {
@@ -118,7 +138,6 @@ exports.getAllRadios = async (req, res) => {
         res.status(500).json({ message: 'Erro interno ao listar rádios.', error: error.message });
     }
 };
-
 /**
  * @route   GET /api/radios/serial/:numeroSerie
  * @desc    Busca um rádio pelo serial, IGNORANDO se está ativo ou não (para históricos).
@@ -227,3 +246,4 @@ exports.getRadiosCondenados = async (req, res) => {
         res.status(500).json({ message: 'Erro interno ao listar rádios condenados.', error: error.message });
     }
 };
+

@@ -11,7 +11,7 @@
 </head>
 <body class="bg-light">
 
-   <div class="sidebar" id="sidebar">
+     <div class="sidebar" id="sidebar">
         <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" class="logo" style="height: 67.5px; width: 100%;">
         <a href="index.html" class="active">🏠 Início</a>
         
@@ -22,11 +22,11 @@
         <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
         <a href="manutencao_dashboard.html">🔧 Manutenção</a> 
         
-        <a href="saida.html">📤 NF de Saída</a>
+        <a href="saida.html">📤 Saida de Locação</a>
         <a href="entrada.html">📥 Retorno de Locação</a>
-        <a href="extrato.html">📄 Extrato de NF</a>
+       
 
-    <a href="gerenciar-nf.html">🧾 Gerenciar NF</a>
+        <a href="gerenciar-nf.html">🧾 Gerenciar Locação</a>
 
         <a href="historico.html">📚 Histórico de Rádio</a>
 
@@ -48,10 +48,20 @@
                         </button>
                     </div>
                 </div>
-
-                <div class="mb-3">
-                    <label for="nfNumeroEntrada" class="form-label fw-bold">N° da Sua NF de Entrada</label>
-                    <input type="text" class="form-control" id="nfNumeroEntrada" required placeholder="Digite o número da sua NF de Retorno/Entrada..." />
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3" id="campoNfManual">
+                            <label for="nfNumeroEntrada" class="form-label fw-bold">N° da Sua NF de Entrada</label>
+                            <input type="text" class="form-control" id="nfNumeroEntrada" required placeholder="Digite o número da sua NF de Retorno..." />
+                        </div>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-center pt-3">
+                         <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="checkNfEntradaAutomatica">
+                            <label class="form-check-label" for="checkNfEntradaAutomatica">Gerar N° Automático</label>
+                        </div>
+                    </div>
                 </div>
                 <div id="listaRadiosParaRetorno" class="mt-4"></div>
 

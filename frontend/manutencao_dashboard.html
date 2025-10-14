@@ -8,48 +8,19 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* CSS para a linha de detalhes e nav-tabs */
-        .detalhes-pedido {
-            background-color: #f0f8ff;
-            margin-top: -1px;
-            border-bottom: 1px solid #dee2e6;
-            border-left: 1px solid #dee2e2;
-            border-right: 1px solid #dee2e6;
-        }
-        .detalhes-pedido td div {
-            padding: 15px;
-        }
-        .table-pedidos th, .table-pedidos td {
-            vertical-align: middle;
-        }
-        .nav-tabs .nav-link {
-            color: #495057;
-        }
-        .nav-tabs .nav-link.active {
-            color: var(--cor-primaria, #880202);
-            border-color: #dee2e6 #dee2e6 var(--cor-primaria, #880202);
-            font-weight: bold;
-        }
-        .detalhes-pedido .row.bg-light {
-            background-color: #e9ecef !important;
-        }
-        /* Estilos para destacar status de rádio individual na OS */
-        .radio-concluido {
-            background-color: #d1e7dd !important; /* Verde claro */
-        }
-        .radio-condenado {
-            background-color: #e2e3e5 !important; /* Cinza claro */
-            text-decoration: line-through;
-            opacity: 0.7;
-        }
-        .radio-transferido {
-            background-color: #fff3cd !important; /* Laranja/amarelo claro */
-            opacity: 0.8;
-        }
+        .detalhes-pedido { background-color: #f0f8ff; margin-top: -1px; border-bottom: 1px solid #dee2e6; border-left: 1px solid #dee2e2; border-right: 1px solid #dee2e6; }
+        .detalhes-pedido td div { padding: 15px; }
+        .table-pedidos th, .table-pedidos td { vertical-align: middle; }
+        .nav-tabs .nav-link { color: #495057; }
+        .nav-tabs .nav-link.active { color: var(--cor-primaria, #880202); border-color: #dee2e6 #dee2e6 var(--cor-primaria, #880202); font-weight: bold; }
+        .detalhes-pedido .row.bg-light { background-color: #e9ecef !important; }
+        .radio-concluido { background-color: #d1e7dd !important; }
+        .radio-condenado { background-color: #e2e3e5 !important; text-decoration: line-through; opacity: 0.7; }
+        .radio-transferido { background-color: #fff3cd !important; opacity: 0.8; }
     </style>
 </head>
 <body class="bg-light">
-    <div class="sidebar" id="sidebar">
+     <div class="sidebar" id="sidebar">
         <img src="https://www.radioscan.com.br/cliente_files/img/empresa/banner-empresa-06.jpg" alt="Logo" class="logo" style="height: 67.5px; width: 100%;">
         <a href="index.html" class="active">🏠 Início</a>
         
@@ -60,11 +31,11 @@
         <a href="solicitar_manutencao.html">📤 Solicitar Manutenção</a>
         <a href="manutencao_dashboard.html">🔧 Manutenção</a> 
         
-        <a href="saida.html">📤 NF de Saída</a>
+        <a href="saida.html">📤 Saida de Locação</a>
         <a href="entrada.html">📥 Retorno de Locação</a>
-        <a href="extrato.html">📄 Extrato de NF</a>
+       
 
-        <a href="gerenciar-nf.html">🧾 Gerenciar NF</a>
+        <a href="gerenciar-nf.html">🧾 Gerenciar Locação</a>
 
         <a href="historico.html">📚 Histórico de Rádio</a>
 
@@ -115,30 +86,15 @@
             </div>
 
             <div class="tab-pane fade" id="pedidos-andamento-pane" role="tabpanel" aria-labelledby="pedidos-andamento-tab" tabindex="0">
-    <div class="main-card">
-        <div class="card-title-embedded">PEDIDOS AGUARDANDO OU EM MANUTENÇÃO</div>
-
-        <div class="pt-3">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <input type="text" id="filtroPedidosEmAndamento" class="form-control" placeholder="Buscar por ID Pedido, Solicitante, Técnico...">
-                </div>
-            </div>
-        </div>
-        <div class="table-responsive pt-3">
-            <table class="table table-hover table-pedidos" id="tabelaPedidosEmAndamento">
-                            <thead>
-                                <tr>
-                                    <th>ID Pedido</th>
-                                    <th>Solicitante</th>
-                                    <th>Data Solicitação</th>
-                                    <th>Status Pedido</th>
-                                    <th>Técnico</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
+                <div class="main-card">
+                    <div class="card-title-embedded">PEDIDOS AGUARDANDO OU EM MANUTENÇÃO</div>
+                    <div class="pt-3">
+                        <div class="row mb-3"><div class="col-md-6"><input type="text" id="filtroPedidosEmAndamento" class="form-control" placeholder="Buscar por ID Pedido, Solicitante, Técnico..."></div></div>
+                    </div>
+                    <div class="table-responsive pt-3">
+                        <table class="table table-hover table-pedidos" id="tabelaPedidosEmAndamento">
+                            <thead><tr><th>ID Pedido</th><th>Solicitante</th><th>Data Solicitação</th><th>Status Pedido</th><th>Técnico</th><th>Ações</th></tr></thead>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
@@ -148,27 +104,8 @@
                 <div class="main-card">
                     <div class="card-title-embedded">ESTOQUE DE RÁDIOS EM MANUTENÇÃO</div>
                     <div class="pt-3">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <input type="text" id="filtroEstoqueManutencao" class="form-control" placeholder="Buscar por Nº Série, Modelo, ID Pedido...">
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover" id="tabelaEstoqueManutencao">
-                                <thead>
-                                    <tr>
-                                        <th>ID Ordem de Serviço</th>
-                                        <th>Modelo</th>
-                                        <th>Frequência</th>
-                                        <th>Nº de Série</th>
-                                        <th>Técnico Responsável</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                        </div>
+                        <div class="row mb-3"><div class="col-md-6"><input type="text" id="filtroEstoqueManutencao" class="form-control" placeholder="Buscar por Nº Série, Modelo, ID Pedido..."></div></div>
+                        <div class="table-responsive"><table class="table table-bordered table-hover" id="tabelaEstoqueManutencao"><thead><tr><th>ID Ordem de Serviço</th><th>Modelo</th><th>Frequência</th><th>Nº de Série</th><th>Técnico Responsável</th><th>Status</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
             </div>
@@ -177,27 +114,8 @@
                 <div class="main-card">
                     <div class="card-title-embedded">HISTÓRICO DE MANUTENÇÕES CONCLUÍDAS</div>
                     <div class="pt-3">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <input type="text" id="filtroHistoricoManutencao" class="form-control" placeholder="Buscar por ID Pedido, Nº Série, Solicitante, Técnico...">
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover table-pedidos" id="tabelaHistoricoManutencao">
-                                <thead>
-                                    <tr>
-                                        <th>ID Pedido</th>
-                                        <th>Solicitante</th>
-                                        <th>Data Conclusão</th>
-                                        <th>Técnico</th>
-                                        <th>Qtd. Rádios</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                        </div>
+                        <div class="row mb-3"><div class="col-md-6"><input type="text" id="filtroHistoricoManutencao" class="form-control" placeholder="Buscar por ID Pedido, Nº Série, Solicitante, Técnico..."></div></div>
+                        <div class="table-responsive"><table class="table table-hover table-pedidos" id="tabelaHistoricoManutencao"><thead><tr><th>ID Pedido</th><th>Solicitante</th><th>Data Conclusão</th><th>Técnico</th><th>Qtd. Rádios</th><th>Ações</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
             </div>
@@ -205,178 +123,57 @@
     </div>
 
     <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-custom-danger" id="customAlertModalHeader"> <h5 class="modal-title text-white" id="customAlertModalLabel">Atenção!</h5> <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="customAlertMessage"></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
-                </div>
-            </div>
-        </div>
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-custom-danger" id="customAlertModalHeader"> <h5 class="modal-title text-white" id="customAlertModalLabel">Atenção!</h5> <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p id="customAlertMessage"></p></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button></div></div></div>
     </div>
 
     <div class="modal fade" id="modalSelecionarTecnico" tabindex="-1" aria-labelledby="modalSelecionarTecnicoLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalSelecionarTecnicoLabel">Iniciar Manutenção - Selecionar Técnico</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="idPedidoParaIniciarManutencao">
-                    <div class="mb-3">
-                        <label for="selectTecnico" class="form-label">Técnico Responsável:</label>
-                        <select class="form-select" id="selectTecnico" required>
-                            <option value="" selected disabled>Selecione um técnico...</option>
-                            <option value="Robson">Robson</option>
-                            <option value="Gabriel">Gabriel</option>
-                            <option value="Outro">Outro (especificar)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3" id="divNomeOutroTecnico" style="display:none;">
-                        <label for="inputNomeOutroTecnico" class="form-label">Nome do Técnico (se "Outro"):</label>
-                        <input type="text" class="form-control" id="inputNomeOutroTecnico" placeholder="Digite o nome do técnico">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnConfirmarIniciarManutencaoComTecnico">Confirmar Início</button>
-                </div>
-            </div>
-        </div>
+        <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalSelecionarTecnicoLabel">Iniciar Manutenção - Selecionar Técnico</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><input type="hidden" id="idPedidoParaIniciarManutencao"><div class="mb-3"><label for="selectTecnico" class="form-label">Técnico Responsável:</label><select class="form-select" id="selectTecnico" required><option value="" selected disabled>Selecione um técnico...</option><option value="Robson">Robson</option><option value="Gabriel">Gabriel</option><option value="Outro">Outro (especificar)</option></select></div><div class="mb-3" id="divNomeOutroTecnico" style="display:none;"><label for="inputNomeOutroTecnico" class="form-label">Nome do Técnico (se "Outro"):</label><input type="text" class="form-control" id="inputNomeOutroTecnico" placeholder="Digite o nome do técnico"></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="btnConfirmarIniciarManutencaoComTecnico">Confirmar Início</button></div></div></div>
     </div>
 
     <div class="modal fade" id="modalInputObservacoesTecnicas" tabindex="-1" aria-labelledby="modalInputObservacoesTecnicasLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalInputObservacoesTecnicasLabel">Concluir Manutenção da OS</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Adicione observações técnicas para a conclusão de toda a OS (opcional):</p>
-                    <textarea class="form-control" id="inputObservacoesTecnicas" rows="3" placeholder="Ex: Todos os reparos foram finalizados..."></textarea>
-                    <input type="hidden" id="idPedidoParaConcluirManutencao">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnConfirmarInputObservacoesTecnicas">Concluir OS</button>
-                </div>
-            </div>
-        </div>
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalInputObservacoesTecnicasLabel">Concluir Manutenção da OS</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p>Adicione observações técnicas para a conclusão de toda a OS (opcional):</p><textarea class="form-control" id="inputObservacoesTecnicas" rows="3" placeholder="Ex: Todos os reparos foram finalizados..."></textarea><input type="hidden" id="idPedidoParaConcluirManutencao"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="btnConfirmarInputObservacoesTecnicas">Concluir OS</button></div></div></div>
     </div>
 
     <div class="modal fade" id="modalConfirmation" tabindex="-1" aria-labelledby="modalConfirmationLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalConfirmationLabel">Confirmação</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="modalConfirmationMessage"></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="btnConfirmAction">Confirmar</button>
-                </div>
-            </div>
-        </div>
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-custom-danger text-white"> <h5 class="modal-title" id="modalConfirmationLabel">Confirmação</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p id="modalConfirmationMessage"></p></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-danger" id="btnConfirmAction">Confirmar</button></div></div></div>
     </div>
     
-    <div class="modal fade" id="modalDarBaixa" tabindex="-1" aria-labelledby="modalDarBaixaLabel" aria-hidden="true">
-    </div>
+    <div class="modal fade" id="modalDarBaixa" tabindex="-1" aria-labelledby="modalDarBaixaLabel" aria-hidden="true"></div>
 
     <div class="modal fade" id="modalCondenarRadio" tabindex="-1" aria-labelledby="modalCondenarRadioLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-custom-danger text-white">
-                    <h5 class="modal-title" id="modalCondenarRadioLabel">Condenar Rádio</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Você está prestes a condenar o rádio <strong id="radioParaCondenarInfo"></strong>. Esta ação é permanente e irá movê-lo para o histórico de baixados.</p>
-                    <div class="mb-3">
-                        <label for="motivoCondenacao" class="form-label">Motivo da Condenação (obrigatório):</label>
-                        <textarea class="form-control" id="motivoCondenacao" rows="3" placeholder="Ex: Dano irreparável na placa principal..."></textarea>
-                    </div>
-                    <input type="hidden" id="idPedidoParaCondenar">
-                    <input type="hidden" id="radioSubIdParaCondenar">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="btnConfirmarCondenacao">Confirmar Condenação</button>
-                </div>
-            </div>
-        </div>
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-custom-danger text-white"><h5 class="modal-title" id="modalCondenarRadioLabel">Condenar Rádio</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p>Você está prestes a condenar o rádio <strong id="radioParaCondenarInfo"></strong>. Esta ação é permanente e irá movê-lo para o histórico de baixados.</p><div class="mb-3"><label for="motivoCondenacao" class="form-label">Motivo da Condenação (obrigatório):</label><textarea class="form-control" id="motivoCondenacao" rows="3" placeholder="Ex: Dano irreparável na placa principal..."></textarea></div><input type="hidden" id="idPedidoParaCondenar"><input type="hidden" id="radioSubIdParaCondenar"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-danger" id="btnConfirmarCondenacao">Confirmar Condenação</button></div></div></div>
     </div>
 
     <div class="modal fade" id="modalTransferirRadio" tabindex="-1" aria-labelledby="modalTransferirRadioLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-custom-danger text-white"><h5 class="modal-title" id="modalTransferirRadioLabel">Transferir Rádio</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p>Transferindo o rádio <strong id="radioParaTransferirInfo"></strong> da OS <strong id="osOrigemParaTransferirInfo"></strong>.</p><input type="hidden" id="idPedidoOrigemParaTransferencia"><input type="hidden" id="radioSubIdParaTransferencia"><div class="mb-3"><label class="form-label">Destino da Transferência:</label><div class="form-check"><input class="form-check-input" type="radio" name="tipoDestino" id="destinoNovaOS" value="nova" checked><label class="form-check-label" for="destinoNovaOS">Criar uma nova OS</label></div><div class="form-check"><input class="form-check-input" type="radio" name="tipoDestino" id="destinoOsExistente" value="existente"><label class="form-check-label" for="destinoOsExistente">Transferir para OS existente</label></div></div><div class="mb-3" id="campoOsExistente" style="display: none;"><label for="idPedidoExistente" class="form-label">ID da OS de Destino:</label><input type="text" class="form-control" id="idPedidoExistente" placeholder="Digite o ID da OS (Ex: PE000123)"></div><div class="mb-3"><label for="novaPrioridade" class="form-label">Prioridade:</label><select id="novaPrioridade" class="form-select"><option value="baixa">Baixa</option><option value="media" selected>Média</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div><div class="mb-3"><label for="novoProblema" class="form-label">Novo Problema / Motivo (obrigatório):</label><textarea class="form-control" id="novoProblema" rows="3" placeholder="Descreva o problema ou o motivo..."></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="btnConfirmarTransferencia">Confirmar Transferência</button></div></div></div>
+    </div>
+    
+    <div class="modal fade" id="modalInserirOS" tabindex="-1" aria-labelledby="modalInserirOSLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="formDarAndamento"><div class="modal-header bg-custom-danger text-white"><h5 class="modal-title" id="modalInserirOSLabel">Dar Andamento - Inserir OS</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><p>Você pode inserir uma OS manualmente ou gerar uma automaticamente.</p><input type="hidden" id="idPedidoParaDarAndamento"><div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" role="switch" id="checkOsAutomatica"><label class="form-check-label" for="checkOsAutomatica">Gerar OS Automática </label></div><div class="mb-3" id="campoOsManual"><label for="inputNumeroOS" class="form-label">Número da Ordem de Serviço (OS):</label><input type="text" class="form-control" id="inputNumeroOS" placeholder="Digite o número da OS" required></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary" id="btnConfirmarDarAndamento">Confirmar</button></div></form></div></div>
+    </div>
+
+    <div class="modal fade" id="modalDecisaoPosManutencao" tabindex="-1" aria-labelledby="modalDecisaoLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-custom-danger text-white">
-                    <h5 class="modal-title" id="modalTransferirRadioLabel">Transferir Rádio</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Transferindo o rádio <strong id="radioParaTransferirInfo"></strong> da OS <strong id="osOrigemParaTransferirInfo"></strong>.</p>
-                    <input type="hidden" id="idPedidoOrigemParaTransferencia">
-                    <input type="hidden" id="radioSubIdParaTransferencia">
-                    <div class="mb-3">
-                        <label class="form-label">Destino da Transferência:</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="tipoDestino" id="destinoNovaOS" value="nova" checked>
-                            <label class="form-check-label" for="destinoNovaOS">Criar uma nova OS</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="tipoDestino" id="destinoOsExistente" value="existente">
-                            <label class="form-check-label" for="destinoOsExistente">Transferir para OS existente</label>
-                        </div>
-                    </div>
-                    <div class="mb-3" id="campoOsExistente" style="display: none;">
-                        <label for="idPedidoExistente" class="form-label">ID da OS de Destino:</label>
-                        <input type="text" class="form-control" id="idPedidoExistente" placeholder="Digite o ID da OS (Ex: PE000123)">
-                    </div>
-                    <div class="mb-3">
-                        <label for="novaPrioridade" class="form-label">Prioridade:</label>
-                        <select id="novaPrioridade" class="form-select">
-                            <option value="baixa">Baixa</option>
-                            <option value="media" selected>Média</option>
-                            <option value="alta">Alta</option>
-                            <option value="urgente">Urgente</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="novoProblema" class="form-label">Novo Problema / Motivo (obrigatório):</label>
-                        <textarea class="form-control" id="novoProblema" rows="3" placeholder="Descreva o problema ou o motivo..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnConfirmarTransferencia">Confirmar Transferência</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modalInserirOS" tabindex="-1" aria-labelledby="modalInserirOSLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-custom-danger text-white">
-                    <h5 class="modal-title" id="modalInserirOSLabel">Dar Andamento - Inserir OS</h5>
+                    <h5 class="modal-title" id="modalDecisaoLabel">Ação Necessária - Manutenção Concluída</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="idPedidoParaDarAndamento">
-                    <div class="mb-3">
-                        <label for="inputNumeroOS" class="form-label">Número da Ordem de Serviço (OS):</label>
-                        <input type="text" class="form-control" id="inputNumeroOS" placeholder="Digite o número da OS" required>
+                    <input type="hidden" id="idPedidoParaDecisao">
+                    <p>A manutenção para a OS <strong id="decisaoIdPedido"></strong> foi concluída.</p>
+                    <div class="alert alert-info">
+                        <p class="mb-1">Este rádio pertence originalmente à <strong>NF de Saída <span id="decisaoOrigemNf" class="fw-bold"></span></strong> do cliente <strong id="decisaoClienteNome"></strong>.</p>
                     </div>
+                    <p class="fw-bold">Qual o destino do rádio consertado?</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnConfirmarDarAndamentoComOS">Confirmar</button>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-success" id="btnDecisaoVoltarParaNf">
+                        <i class="bi bi-box-arrow-up-right"></i> Voltar para a NF do Cliente
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnDecisaoVoltarParaEstoque">
+                        <i class="bi bi-box-seam"></i> Mover para o Estoque
+                    </button>
                 </div>
             </div>
         </div>
